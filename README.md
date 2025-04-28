@@ -1,97 +1,86 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Guia de Commits com Git
 
-# Getting Started
+## Importância do Uso Apropriado de Commits
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+O uso correto do `git commit` é essencial para o desenvolvimento de software, seja em projetos pessoais, de código aberto ou empresariais. Manter uma linguagem coerente e padronizada nas mensagens de commit ajuda todos os envolvidos no projeto a entenderem as mudanças e os contextos afetados.
 
-## Step 1: Start Metro
+## Problemas com Commits Mal Comentados
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+Mensagens de commit pouco informativas podem dificultar o entendimento da natureza e do contexto das mudanças. A longo prazo, isso prejudica a manutenibilidade do software.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Benefícios dos Commits Documentados
 
-```sh
-# Using npm
-npm start
+Commits bem documentados mostram quem alterou o que, quando, em qual contexto e qual tipo de alteração foi feita. Isso facilita o entendimento e a colaboração no projeto.
 
-# OR using Yarn
-yarn start
+## Conventional Commits
+
+O Conventional Commits é uma convenção para mensagens de commit que segue um conjunto de regras, ajudando a manter um histórico explícito e estruturado.
+
+### Vantagens
+
+*   Automatização da criação de CHANGELOGs
+*   Facilitação da entrada de novos desenvolvedores
+*   Geração de relatórios
+*   Melhor compreensão do foco do projeto (refatoração, novas features, etc.)
+
+### Estrutura
+
+```
+<type>(<scope>): <subject>
 ```
 
-## Step 2: Build and run your app
+*   **type**: Tipo de commit (obrigatório)
+*   **scope**: Contexto do commit (opcional)
+*   **subject**: Mensagem do commit (obrigatório)
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Tipos de Commit
 
-### Android
+*   `test`: Criação ou alteração de códigos de teste
+*   `feat`: Desenvolvimento de uma nova feature
+*   `refactor`: Refatoração de código sem alterar a lógica de negócio
+*   `style`: Mudanças de formatação e estilo do código
+*   `fix`: Correção de erros que geram bugs
+*   `chore`: Mudanças no projeto que não afetam o sistema ou arquivos de testes
+*   `docs`: Mudanças na documentação do projeto
+*   `build`: Mudanças que afetam o processo de build ou dependências externas
+*   `perf`: Alteração que melhora a performance do sistema
+*   `ci`: Mudanças nos arquivos de configuração de CI
+*   `revert`: Reversão de um commit anterior
 
-```sh
-# Using npm
-npm run android
+### Exemplos de Commits
 
-# OR using Yarn
-yarn android
+*   `feat`: Adição de uma nova funcionalidade
+*   `fix`: Correção de um bug
+*   `docs`: Atualização da documentação
+*   `style`: Formatação de código
+*   `refactor`: Refatoração de código
+*   `test`: Adição de testes
+*   `chore`: Atualização de ferramentas de build
+
+### Observações
+
+*   Apenas um tipo por commit
+*   O tipo é obrigatório
+*   Em caso de dúvida, separe em múltiplos commits
+
+## Uso do Scope
+
+O `scope` é utilizado para contextualizar o commit, especialmente útil em projetos grandes.
+
+**Exemplo:**
+
+```
+feat(auth): adicionar autenticação por token
 ```
 
-### iOS
+## Como Utilizamos na LinkApi
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+Na LinkApi, adaptamos o Conventional Commits para nossas necessidades. Por exemplo, usamos o tipo `business` para mudanças de regras de negócio e definimos o escopo do commit de acordo com a sprint.
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## Ferramenta de Apoio: CommitLint
 
-```sh
-bundle install
-```
+O CommitLint verifica se as mensagens de commit seguem o padrão e bloqueia commits que não seguem as convenções.
 
-Then, and every time you update your native dependencies, run:
+## Conclusão
 
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Adotar o Conventional Commits melhora a colaboração, o gerenciamento de projetos e a integração com repositórios da comunidade. É uma prática que, apesar de demandar tempo inicialmente, traz grandes benefícios a longo prazo.
