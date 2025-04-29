@@ -16,22 +16,27 @@ export const DefaultTheme: Theme = {
         bigTitle: {
           fontSize: 24,
           fontWeight: 'bold',
+          fontFamily: 'Roboto',
         },
         mediumTitle: {
           fontSize: 20,
-          fontWeight: 'semibold',
+          fontWeight: 'bold',
+          fontFamily: 'Roboto',
         },
         subtitle: {
             fontSize: 18,
             fontWeight: 'medium',
+            fontFamily: 'Roboto',
         },
         regular: {
           fontSize: 16,
           fontWeight: 'normal',
+          fontFamily: 'Roboto',
         },
         caption: {
             fontSize: 12,
             fontWeight: 'normal',
+            fontFamily: 'Roboto',
         },
     },
 };

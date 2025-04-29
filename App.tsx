@@ -1,8 +1,9 @@
 import React from 'react';
 import { MMKV } from 'react-native-mmkv';
-import { View, Text } from 'react-native';
 import 'react-native-gesture-handler';
-import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { ThemeProvider } from './src/theme/ThemeContext';
+
+import LoginScreen from './src/screens/login/LoginScreen';
 
 export const storage = new MMKV({
   id: 'user-preferences-storage',
@@ -10,13 +11,9 @@ export const storage = new MMKV({
 
 function App() {
 
-  const { theme } = useTheme();
-
   return (
     <ThemeProvider>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
-        <Text style={{ color: theme.colors.mainText, ...theme.typography.bigTitle }}>Olá, Taskly!</Text>
-      </View>
+        <LoginScreen />
     </ThemeProvider>
   );
 }
