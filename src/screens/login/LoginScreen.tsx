@@ -7,19 +7,47 @@ import { useLoginStyles } from './LoginStyles';
 // Importar hook de navegação (será configurado depois)
 // import { useNavigation } from '@react-navigation/native';
 
+// Regex simples para validação de e-mail
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const LoginScreen = () => {
     const styles = useLoginStyles();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [loginError, setLoginError] = useState(''); // Para erro genérico de login
     // const navigation = useNavigation(); // Para navegação
 
-    const handleLogin = () => {
-        // 1. Validação básica dos campos
-        if (!email.trim() || !password.trim()) {
-            Alert.alert('Erro', 'Por favor, preencha o e-mail e a senha.');
-            return;
+    const validateInputs = (): boolean => {
+        let isValid = true;
+        setEmailError('');
+        setPasswordError('');
+        setLoginError(''); // Limpa erro genérico ao tentar validar novamente
+
+        if (!email.trim()) {
+            setEmailError('Por favor, preencha o e-mail.');
+            isValid = false;
+        } else if (!emailRegex.test(email)) {
+            setEmailError('E-mail inválido.');
+            isValid = false;
         }
-        // TODO: 2. Implementar validação de formato de e-mail
+
+        if (!password.trim()) {
+            setPasswordError('Por favor, preencha a senha.');
+            isValid = false;
+        } else if (password.length < 8) {
+            setPasswordError('A senha deve ter pelo menos 8 caracteres.');
+            isValid = false;
+        }
+
+        return isValid;
+    };
+
+    const handleLogin = () => {
+        if (!validateInputs()) {
+            return; // Se a validação falhar, não prossegue com o login
+        }
 
         // TODO: 3. Implementar busca do usuário no MMKV pelo e-mail
         // const user = getUserByEmail(email);
@@ -54,26 +82,43 @@ const LoginScreen = () => {
                 style={styles.input}
                 placeholder="Digite seu e-mail"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                    setEmail(text);
+                    if (emailError) {
+                        setEmailError(''); // Limpa o erro ao digitar
+                    }
+                    if (loginError) {
+                        setLoginError(''); // Limpa o erro genérico
+                    }
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
             />
-            {/* TODO: Adicionar lógica para exibir erro real */}
-            <Text style={styles.errorText}>{/* Erro aqui */}</Text>
+            {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
 
             <Text style={styles.label}>Senha</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Digite sua senha"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                    setPassword(text);
+                    if (passwordError) {
+                        setPasswordError('');
+                    }
+                    if (loginError) {
+                        setLoginError('');
+                    }
+                }}
                 secureTextEntry
                 autoCapitalize="none"
                 autoComplete="password"
             />
-            {/* TODO: Adicionar lógica para exibir erro real */}
-            <Text style={styles.errorText}>{/* Erro aqui */}</Text>
+            {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
+
+            {/* Exibe erro genérico de login, se houver */}
+            {!!loginError && <Text style={styles.errorText}>{loginError}</Text>}
 
             {/* TODO: Implementar Checkbox "Lembrar de mim" */}
 
