@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 
 import { View, Text, TextInput, Pressable, Alert, Image } from 'react-native';
 import { useLoginStyles } from './LoginStyles';
-// Importar funções de storage do usuário (serão criadas depois)
-// import { getUserByEmail } from '../storage/userStorage'; // Exemplo
+import { getUserByEmail } from '../../storage/userStorage';
 // Importar hook de navegação (será configurado depois)
 // import { useNavigation } from '@react-navigation/native';
 
@@ -16,14 +15,14 @@ const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const [loginError, setLoginError] = useState(''); // Para erro genérico de login
+    const [loginError, setLoginError] = useState(''); // Estado para erro genérico
     // const navigation = useNavigation(); // Para navegação
 
     const validateInputs = (): boolean => {
         let isValid = true;
         setEmailError('');
         setPasswordError('');
-        setLoginError(''); // Limpa erro genérico ao tentar validar novamente
+        setLoginError(''); // Limpa o erro genérico ao tentar validar novamente
 
         if (!email.trim()) {
             setEmailError('Por favor, preencha o e-mail.');
@@ -49,18 +48,20 @@ const LoginScreen = () => {
             return; // Se a validação falhar, não prossegue com o login
         }
 
-        // TODO: 3. Implementar busca do usuário no MMKV pelo e-mail
-        // const user = getUserByEmail(email);
-        // if (user && user.password === password) { // Comparação de senha (precisa de hashing seguro no futuro)
-        //    Alert.alert('Sucesso', 'Login realizado!');
-        //    // Navegar para a tela principal
-        //    // navigation.navigate('MainApp');
-        // } else {
-        //    Alert.alert('Erro', 'E-mail ou senha inválidos.');
-        // }
+        // Busca o usuário pelo e-mail no MMKV
+        const user = getUserByEmail(email);
 
-        console.log('Tentativa de Login com:', email); // Placeholder
-        Alert.alert('Login Offline', 'Lógica de verificação no MMKV a ser implementada.');
+        // Verifica se o usuário existe e se a senha corresponde
+        if (user && user.password === password) { // Comparação de senha (precisa de hashing seguro no futuro)
+            setLoginError(''); // Limpa qualquer erro anterior
+            Alert.alert('Sucesso', `Login realizado com sucesso! Bem-vindo(a), ${user.name || user.email}!`);
+            // TODO: Implementar Checkbox "Lembrar de mim"
+            // TODO: Navegar para a tela principal
+            // navigation.navigate('MainApp');
+        } else {
+            // Usuário não encontrado ou senha incorreta
+            setLoginError('E-mail ou senha incorretos.');
+        }
     };
 
     const navigateToRegister = () => {
@@ -88,14 +89,16 @@ const LoginScreen = () => {
                         setEmailError(''); // Limpa o erro ao digitar
                     }
                     if (loginError) {
-                        setLoginError(''); // Limpa o erro genérico
+                        setLoginError(''); // Limpa o erro genérico ao digitar
                     }
                 }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
             />
-            {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
+            <Text style={[styles.errorText, { opacity: Number(!!emailError) }]}>
+                {emailError || ''}
+            </Text>
 
             <Text style={styles.label}>Senha</Text>
             <TextInput
@@ -115,10 +118,13 @@ const LoginScreen = () => {
                 autoCapitalize="none"
                 autoComplete="password"
             />
-            {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
+            <Text style={[styles.errorText, { opacity: Number(!!passwordError) }]}>
+                {passwordError || ''}
+            </Text>
 
-            {/* Exibe erro genérico de login, se houver */}
-            {!!loginError && <Text style={styles.errorText}>{loginError}</Text>}
+            <Text style={[styles.errorText, { opacity: Number(!!loginError) }]}>
+                {loginError || ''}
+            </Text>
 
             {/* TODO: Implementar Checkbox "Lembrar de mim" */}
 
@@ -126,14 +132,14 @@ const LoginScreen = () => {
                 onPress={handleLogin}
                 style={styles.buttonPrimary}
             >
-                <Text style={styles.buttonPrimaryText}>ENTRAR</Text>
+                <Text style={styles.buttonPrimaryText}>Entrar</Text>
             </Pressable>
 
             <Pressable
                 onPress={navigateToRegister}
                 style={styles.buttonSecondary}
             >
-            <Text style={styles.buttonSecondaryText}>CRIAR CONTA</Text>
+            <Text style={styles.buttonSecondaryText}>Criar Conta</Text>
             </Pressable>
         </View>
     );
