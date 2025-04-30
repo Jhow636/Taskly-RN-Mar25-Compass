@@ -69,6 +69,6 @@ const AppNavigator = () => {
             {isUserLoggedIn ? <MainNavigator /> : <AuthNavigator />}
         </NavigationContainer>
     );
-}
+};
 
 export default AppNavigator;
