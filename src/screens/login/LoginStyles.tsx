@@ -45,6 +45,17 @@ export const useLoginStyles = () => {
             marginBottom: 12, // Espaço depois da mensagem de erro
             height: 15, // Reserva o espaço mesmo sem erro
         },
+        checkboxContainer: {
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+        },
+        checkbox: {
+            borderRadius: 2,
+        },
+        checkboxLabel: {
+            ...theme.typography.regular,
+            color: theme.colors.mainText,
+        },
         buttonPrimary: {
             width: '100%',
             backgroundColor: theme.colors.primary,

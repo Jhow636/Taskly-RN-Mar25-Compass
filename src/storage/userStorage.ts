@@ -58,6 +58,45 @@ export const getUserByEmail = (email: string): User | null => {
     }
 };
 
+const REMEMBERED_EMAIL_KEY = 'rememberedUserEmail'; // Chave para o email lembrado
+
+/**
+ * Salva o e-mail do usuário para ser lembrado no próximo login.
+ * @param email O e-mail a ser lembrado.
+*/
+export const saveRememberedEmail = (email: string): void => {
+    try {
+        storage.set(REMEMBERED_EMAIL_KEY, email); // Armazena o e-mail no MMKV
+    } catch (error) {
+        console.error('Erro ao salvar e-mail lembrado:', error);
+    }
+};
+
+/**
+ * Salva o e-mail do usuário para ser lembrado no próximo login.
+ * @param email O e-mail a ser lembrado.
+*/
+export const getRememberedEmail = (): string | null => {
+    try {
+        const email = storage.getString(REMEMBERED_EMAIL_KEY); // Busca o e-mail no MMKV
+        return email || null;
+    } catch (error) {
+        console.error('Erro ao buscar e-mail lembrado:', error);
+        return null; // Retorna null se não houver e-mail lembrado
+    }
+};
+
+/**
+ * Remove o e-mail lembrado do MMKV.
+*/
+export const clearRememberedEmail = (): void => {
+    try {
+        storage.delete(REMEMBERED_EMAIL_KEY); // Remove o e-mail do MMKV
+    } catch (error) {
+        console.error('Erro ao limpar e-mail lembrado:', error);
+    }
+};
+
 /**
  * Remove um usuário do MMKV pelo seu endereço de e-mail.
  * @param email O e-mail do usuário a ser removido.

@@ -2,20 +2,19 @@ import React from 'react';
 import { MMKV } from 'react-native-mmkv';
 import 'react-native-gesture-handler';
 import { ThemeProvider } from './src/theme/ThemeContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
-import LoginScreen from './src/screens/login/LoginScreen';
-
+// Inicializa e exporta a instância do MMKV
 export const storage = new MMKV({
   id: 'user-preferences-storage',
 });
 
-function App() {
-
+const App = () => {
   return (
     <ThemeProvider>
-        <LoginScreen />
+      <AppNavigator />
     </ThemeProvider>
   );
-}
+};
 
 export default App;

@@ -1,22 +1,40 @@
-import React, { useState } from 'react';
-
-import { View, Text, TextInput, Pressable, Alert, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Pressable, Image } from 'react-native';
+import { AdvancedCheckbox } from 'react-native-advanced-checkbox';
 import { useLoginStyles } from './LoginStyles';
-import { getUserByEmail } from '../../storage/userStorage';
-// Importar hook de navegação (será configurado depois)
-// import { useNavigation } from '@react-navigation/native';
+import { getUserByEmail, saveRememberedEmail, getRememberedEmail, clearRememberedEmail } from '../../storage/userStorage';
+import { useNavigation } from '@react-navigation/native';
+// Importar o tipo para a stack de navegação (será criado em App.tsx ou navigation file)
+import { AuthStackParamList } from '../../navigation/types'; // Exemplo de caminho
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 // Regex simples para validação de e-mail
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Definindo o tipo de navegação para a tela de login
+type LoginScreenNavigationProp = NativeStackNavigationProp<
+    AuthStackParamList,
+    'Login' // Nome desta tela na stack de navegação
+>;
 
 const LoginScreen = () => {
     const styles = useLoginStyles();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false); // Estado para Checkbox "Lembrar de mim"
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [loginError, setLoginError] = useState(''); // Estado para erro genérico
-    // const navigation = useNavigation(); // Para navegação
+    const navigation = useNavigation<LoginScreenNavigationProp>();
+
+    // Efeito para carregar o e-mail lembrado (se houver)
+    useEffect(() => {
+        const rememberedEmail = getRememberedEmail(); // Busca o e-mail lembrado
+        if (rememberedEmail) {
+            setEmail(rememberedEmail); // Preenche o campo de e-mail com o e-mail lembrado
+            setRememberMe(true); // Marca o checkbox como selecionado
+        }
+    }, []);
 
     const validateInputs = (): boolean => {
         let isValid = true;
@@ -54,10 +72,20 @@ const LoginScreen = () => {
         // Verifica se o usuário existe e se a senha corresponde
         if (user && user.password === password) { // Comparação de senha (precisa de hashing seguro no futuro)
             setLoginError(''); // Limpa qualquer erro anterior
-            Alert.alert('Sucesso', `Login realizado com sucesso! Bem-vindo(a), ${user.name || user.email}!`);
-            // TODO: Implementar Checkbox "Lembrar de mim"
-            // TODO: Navegar para a tela principal
-            // navigation.navigate('MainApp');
+            // Alert.alert('Sucesso', `Login realizado com sucesso! Bem-vindo(a), ${user.name || user.email}!`);
+
+            // Lógica do "Lembrar de mim"
+            if (rememberMe) {
+                saveRememberedEmail(email); // Salva o e-mail se o checkbox estiver marcado
+            } else {
+                clearRememberedEmail(); // Limpa o e-mail lembrado se o checkbox não estiver marcado
+            }
+
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' as any }],
+            });
+
         } else {
             // Usuário não encontrado ou senha incorreta
             setLoginError('E-mail ou senha incorretos.');
@@ -65,10 +93,8 @@ const LoginScreen = () => {
     };
 
     const navigateToRegister = () => {
-        // TODO: Implementar navegação para a tela de Cadastro
-        // navigation.navigate('Register');
-        console.log('Navegar para Cadastro');
-        Alert.alert('Navegação', 'Ir para a tela de Cadastro.');
+        // Navegar para a tela de Cadastro (ex: 'Register')
+        navigation.navigate('Register');
     };
 
     return (
@@ -126,7 +152,25 @@ const LoginScreen = () => {
                 {loginError || ''}
             </Text>
 
-            {/* TODO: Implementar Checkbox "Lembrar de mim" */}
+            {/* Checkbox "Lembrar de mim" */}
+            <View style={styles.checkboxContainer}>
+                <AdvancedCheckbox
+                    value={rememberMe}
+                    onValueChange={(newValue) => {
+                        setRememberMe(!!newValue);
+                        console.log('Checkbox clicked, new value:', newValue, 'isChecked:', !!newValue);
+                    }}
+                    label="Lembrar de mim"
+                    labelPosition="right"
+                    labelStyle={styles.checkboxLabel}
+                    checkedImage={require('../../assets/img/checkbox-checked.png')}
+                    checkBoxStyle={styles.checkbox}
+                    checkedColor="#32C25B"
+                    uncheckedColor="#B58B46"
+                    animationType="bounce"
+                    size={18}
+                />
+            </View>
 
             <Pressable
                 onPress={handleLogin}
