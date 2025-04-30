@@ -42,7 +42,7 @@ export const useLoginStyles = () => {
             color: theme.colors.error,
             alignSelf: 'flex-start',
             marginLeft: 5,
-            marginBottom: 15, // Espaço depois da mensagem de erro
+            marginBottom: 12, // Espaço depois da mensagem de erro
             height: 15, // Reserva o espaço mesmo sem erro
         },
         buttonPrimary: {
@@ -66,10 +66,12 @@ export const useLoginStyles = () => {
         buttonPrimaryText: {
             ...theme.typography.mediumTitle,
             color: theme.colors.secondaryBg,
+            textTransform: 'uppercase',
         },
         buttonSecondaryText: {
             ...theme.typography.mediumTitle,
             color: theme.colors.primary,
+            textTransform: 'uppercase',
         },
     }), [theme]);
 
