@@ -19,4 +19,5 @@ export interface Theme {
         regular: TextStyle;
         caption: TextStyle;
     };
+    statusBarStyle: 'light' | 'dark';
 }

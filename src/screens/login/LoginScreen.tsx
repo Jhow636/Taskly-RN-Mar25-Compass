@@ -1,45 +1,103 @@
-import React, { useState } from 'react';
-
-import { View, Text, TextInput, Pressable, Alert, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Pressable, Image } from 'react-native';
+import { AdvancedCheckbox } from 'react-native-advanced-checkbox';
 import { useLoginStyles } from './LoginStyles';
-// Importar funções de storage do usuário (serão criadas depois)
-// import { getUserByEmail } from '../storage/userStorage'; // Exemplo
-// Importar hook de navegação (será configurado depois)
-// import { useNavigation } from '@react-navigation/native';
+import { getUserByEmail, saveRememberedEmail, getRememberedEmail, clearRememberedEmail, saveLoginSession } from '../../storage/userStorage';
+import { useNavigation } from '@react-navigation/native';
+// Importar o tipo para a stack de navegação (será criado em App.tsx ou navigation file)
+import { AuthStackParamList } from '../../navigation/types'; // Exemplo de caminho
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Regex simples para validação de e-mail
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Definindo o tipo de navegação para a tela de login
+type LoginScreenNavigationProp = NativeStackNavigationProp<
+    AuthStackParamList,
+    'Login' // Nome desta tela na stack de navegação
+>;
 
 const LoginScreen = () => {
     const styles = useLoginStyles();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    // const navigation = useNavigation(); // Para navegação
+    const [rememberMe, setRememberMe] = useState(false); // Estado para Checkbox "Lembrar de mim"
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [loginError, setLoginError] = useState(''); // Estado para erro genérico
+    const navigation = useNavigation<LoginScreenNavigationProp>();
+
+    // Efeito para carregar o e-mail lembrado (se houver)
+    useEffect(() => {
+        const rememberedEmail = getRememberedEmail(); // Busca o e-mail lembrado
+        if (rememberedEmail) {
+            setEmail(rememberedEmail); // Preenche o campo de e-mail com o e-mail lembrado
+            setRememberMe(true); // Marca o checkbox como selecionado
+        }
+    }, []);
+
+    const validateInputs = (): boolean => {
+        let isValid = true;
+        setEmailError('');
+        setPasswordError('');
+        setLoginError(''); // Limpa o erro genérico ao tentar validar novamente
+
+        if (!email.trim()) {
+            setEmailError('Por favor, preencha o e-mail.');
+            isValid = false;
+        } else if (!emailRegex.test(email)) {
+            setEmailError('E-mail inválido.');
+            isValid = false;
+        }
+
+        if (!password.trim()) {
+            setPasswordError('Por favor, preencha a senha.');
+            isValid = false;
+        } else if (password.length < 8) {
+            setPasswordError('A senha deve ter pelo menos 8 caracteres.');
+            isValid = false;
+        }
+
+        return isValid;
+    };
 
     const handleLogin = () => {
-        // 1. Validação básica dos campos
-        if (!email.trim() || !password.trim()) {
-            Alert.alert('Erro', 'Por favor, preencha o e-mail e a senha.');
-            return;
+        if (!validateInputs()) {
+            return; // Se a validação falhar, não prossegue com o login
         }
-        // TODO: 2. Implementar validação de formato de e-mail
 
-        // TODO: 3. Implementar busca do usuário no MMKV pelo e-mail
-        // const user = getUserByEmail(email);
-        // if (user && user.password === password) { // Comparação de senha (precisa de hashing seguro no futuro)
-        //    Alert.alert('Sucesso', 'Login realizado!');
-        //    // Navegar para a tela principal
-        //    // navigation.navigate('MainApp');
-        // } else {
-        //    Alert.alert('Erro', 'E-mail ou senha inválidos.');
-        // }
+        // Busca o usuário pelo e-mail no MMKV
+        const user = getUserByEmail(email);
 
-        console.log('Tentativa de Login com:', email); // Placeholder
-        Alert.alert('Login Offline', 'Lógica de verificação no MMKV a ser implementada.');
+        // Verifica se o usuário existe e se a senha corresponde
+        if (user && user.password === password) { // Comparação de senha (precisa de hashing seguro no futuro)
+            setLoginError(''); // Limpa qualquer erro anterior
+
+            // Salva a sessão de login ANTES de navegar
+            saveLoginSession(user.email);
+
+            // Lógica do "Lembrar de mim"
+            if (rememberMe) {
+                saveRememberedEmail(email); // Salva o e-mail se o checkbox estiver marcado
+            } else {
+                clearRememberedEmail(); // Limpa o e-mail lembrado se o checkbox não estiver marcado
+            }
+
+
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' as any }],
+            });
+
+        } else {
+            // Usuário não encontrado ou senha incorreta
+            setLoginError('E-mail ou senha incorretos.');
+        }
     };
 
     const navigateToRegister = () => {
-        // TODO: Implementar navegação para a tela de Cadastro
-        // navigation.navigate('Register');
-        console.log('Navegar para Cadastro');
-        Alert.alert('Navegação', 'Ir para a tela de Cadastro.');
+        // Navegar para a tela de Cadastro (ex: 'Register')
+        navigation.navigate('Register');
     };
 
     return (
@@ -54,41 +112,81 @@ const LoginScreen = () => {
                 style={styles.input}
                 placeholder="Digite seu e-mail"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                    setEmail(text);
+                    if (emailError) {
+                        setEmailError(''); // Limpa o erro ao digitar
+                    }
+                    if (loginError) {
+                        setLoginError(''); // Limpa o erro genérico ao digitar
+                    }
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
             />
-            {/* TODO: Adicionar lógica para exibir erro real */}
-            <Text style={styles.errorText}>{/* Erro aqui */}</Text>
+            <Text style={[styles.errorText, { opacity: Number(!!emailError) }]}>
+                {emailError || ''}
+            </Text>
 
             <Text style={styles.label}>Senha</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Digite sua senha"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                    setPassword(text);
+                    if (passwordError) {
+                        setPasswordError('');
+                    }
+                    if (loginError) {
+                        setLoginError('');
+                    }
+                }}
                 secureTextEntry
                 autoCapitalize="none"
                 autoComplete="password"
             />
-            {/* TODO: Adicionar lógica para exibir erro real */}
-            <Text style={styles.errorText}>{/* Erro aqui */}</Text>
+            <Text style={[styles.errorText, { opacity: Number(!!passwordError) }]}>
+                {passwordError || ''}
+            </Text>
 
-            {/* TODO: Implementar Checkbox "Lembrar de mim" */}
+            <Text style={[styles.errorText, { opacity: Number(!!loginError) }]}>
+                {loginError || ''}
+            </Text>
+
+            {/* Checkbox "Lembrar de mim" */}
+            <View style={styles.checkboxContainer}>
+                <AdvancedCheckbox
+                    value={rememberMe}
+                    onValueChange={(newValue) => {
+                        setRememberMe(!!newValue);
+                        console.log('Checkbox clicked, new value:', newValue, 'isChecked:', !!newValue);
+                    }}
+                    label="Lembrar de mim"
+                    labelPosition="right"
+                    labelStyle={styles.checkboxLabel}
+                    checkedImage={require('../../assets/img/checkbox-checked.png')}
+                    checkBoxStyle={styles.checkbox}
+                    checkedColor="#32C25B"
+                    uncheckedColor="#B58B46"
+                    animationType="bounce"
+                    size={18}
+                />
+            </View>
 
             <Pressable
                 onPress={handleLogin}
                 style={styles.buttonPrimary}
             >
-                <Text style={styles.buttonPrimaryText}>ENTRAR</Text>
+                <Text style={styles.buttonPrimaryText}>Entrar</Text>
             </Pressable>
 
             <Pressable
                 onPress={navigateToRegister}
                 style={styles.buttonSecondary}
             >
-            <Text style={styles.buttonSecondaryText}>CRIAR CONTA</Text>
+            <Text style={styles.buttonSecondaryText}>Criar Conta</Text>
             </Pressable>
         </View>
     );

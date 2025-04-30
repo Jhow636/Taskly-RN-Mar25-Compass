@@ -13,6 +13,12 @@ export const useLoginStyles = () => {
             padding: 30, // Aumentar padding
             backgroundColor: theme.colors.background,
         },
+        loadingContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.background,
+        },
         logo: {
             width: '100%',
             height: 56,
@@ -42,8 +48,19 @@ export const useLoginStyles = () => {
             color: theme.colors.error,
             alignSelf: 'flex-start',
             marginLeft: 5,
-            marginBottom: 15, // Espaço depois da mensagem de erro
+            marginBottom: 12, // Espaço depois da mensagem de erro
             height: 15, // Reserva o espaço mesmo sem erro
+        },
+        checkboxContainer: {
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+        },
+        checkbox: {
+            borderRadius: 2,
+        },
+        checkboxLabel: {
+            ...theme.typography.regular,
+            color: theme.colors.mainText,
         },
         buttonPrimary: {
             width: '100%',
@@ -66,10 +83,12 @@ export const useLoginStyles = () => {
         buttonPrimaryText: {
             ...theme.typography.mediumTitle,
             color: theme.colors.secondaryBg,
+            textTransform: 'uppercase',
         },
         buttonSecondaryText: {
             ...theme.typography.mediumTitle,
             color: theme.colors.primary,
+            textTransform: 'uppercase',
         },
     }), [theme]);
 
