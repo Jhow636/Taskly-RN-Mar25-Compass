@@ -13,6 +13,12 @@ export const useLoginStyles = () => {
             padding: 30, // Aumentar padding
             backgroundColor: theme.colors.background,
         },
+        loadingContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.background,
+        },
         logo: {
             width: '100%',
             height: 56,

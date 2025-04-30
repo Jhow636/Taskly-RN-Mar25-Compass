@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeContext';
+import { useLoginStyles } from '../screens/login/LoginStyles';
 
 // Importar tipos de navegação
 import { AuthStackParamList, MainStackParamList } from './types';
@@ -44,7 +46,10 @@ function MainNavigator() {
 
 // --- Navegador Raiz ---
 const AppNavigator = () => {
+    const [isLoading, setIsLoading] = useState(true);
     const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+    const { theme } = useTheme();
+    const styles = useLoginStyles();
 
     useEffect(() => {
         const checkLoginStatus = () => {
@@ -59,10 +64,20 @@ const AppNavigator = () => {
             } catch (error) {
                 console.error('Erro ao verificar sessão de login:', error);
                 setIsUserLoggedIn(false);
+            } finally {
+                setIsLoading(false);
             }
         };
         checkLoginStatus();
     }, []);
+
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+        );
+    }
 
     return (
         <NavigationContainer>
