@@ -34,4 +34,5 @@ export const DarkTheme: Theme = {
       fontFamily: 'Roboto',
     },
   },
+  statusBarStyle: 'light',
 };

@@ -34,4 +34,5 @@ export const DefaultTheme: Theme = {
       fontFamily: 'Roboto',
     },
   },
+  statusBarStyle: 'dark',
 };
