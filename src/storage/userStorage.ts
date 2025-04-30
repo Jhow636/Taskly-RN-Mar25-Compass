@@ -59,6 +59,7 @@ export const getUserByEmail = (email: string): User | null => {
 };
 
 const REMEMBERED_EMAIL_KEY = 'rememberedUserEmail'; // Chave para o email lembrado
+const ACTIVE_LOGIN_SESSION_KEY = 'activeLoginSessionEmail'; // Chave para a sessão ativa
 
 /**
  * Salva o e-mail do usuário para ser lembrado no próximo login.
@@ -94,6 +95,45 @@ export const clearRememberedEmail = (): void => {
         storage.delete(REMEMBERED_EMAIL_KEY); // Remove o e-mail do MMKV
     } catch (error) {
         console.error('Erro ao limpar e-mail lembrado:', error);
+    }
+};
+
+/**
+ * Salva o e-mail do usuário que acabou de fazer login como sessão ativa.
+ * @param email O e-mail do usuário logado.
+*/
+export const saveLoginSession = (email: string): void => {
+    try {
+        storage.set(ACTIVE_LOGIN_SESSION_KEY, email);
+        console.log(`Sessão de login salva para: ${email}`);
+    } catch (error) {
+        console.error('Erro ao salvar sessão de login:', error);
+    }
+};
+
+/**
+ * Busca o e-mail da sessão de login ativa no MMKV.
+ * @returns O e-mail da sessão ativa ou null se não houver sessão.
+*/
+export const getLoginSession = (): string | null => {
+    try {
+        const email = storage.getString(ACTIVE_LOGIN_SESSION_KEY);
+        return email || null;
+    } catch (error) {
+        console.error('Erro ao buscar sessão de login:', error);
+        return null;
+    }
+};
+
+/**
+ * Remove a sessão de login ativa do MMKV (logout).
+*/
+export const clearLoginSession = (): void => {
+    try {
+        storage.delete(ACTIVE_LOGIN_SESSION_KEY);
+        console.log('Sessão de login removida com sucesso.');
+    } catch (error) {
+        console.error('Erro ao remover sessão de login:', error);
     }
 };
 

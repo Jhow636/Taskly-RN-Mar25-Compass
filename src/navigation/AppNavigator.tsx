@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeContext';
@@ -10,6 +10,9 @@ import { AuthStackParamList, MainStackParamList } from './types';
 import LoginScreen from '../screens/login/LoginScreen';
 // import RegisterScreen from '../screens/register/RegisterScreen'; // Descomente quando criar
 // import HomeScreen from '../screens/home/HomeScreen'; // Descomente quando criar
+
+// importa função de verificação de sessão ativa
+import { getLoginSession } from '../storage/userStorage';
 
 // --- Stacks ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -41,13 +44,29 @@ function MainNavigator() {
 
 // --- Navegador Raiz ---
 const AppNavigator = () => {
-    // TODO: Implementar lógica real de verificação de login
-    //       (Ex: verificar um token/flag no MMKV)
-    const isLoggedIn = false; // Placeholder - Mude isso com base no estado de login real
+    const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+
+    useEffect(() => {
+        const checkLoginStatus = () => {
+            try {
+                const loggedInUserEmail = getLoginSession();
+                if (loggedInUserEmail) {
+                    console.log(`Sessão encontrada para: ${loggedInUserEmail}`);
+                    setIsUserLoggedIn(true);
+                } else {
+                    setIsUserLoggedIn(false);
+                }
+            } catch (error) {
+                console.error('Erro ao verificar sessão de login:', error);
+                setIsUserLoggedIn(false);
+            }
+        };
+        checkLoginStatus();
+    }, []);
 
     return (
         <NavigationContainer>
-            {isLoggedIn ? <MainNavigator /> : <AuthNavigator />}
+            {isUserLoggedIn ? <MainNavigator /> : <AuthNavigator />}
         </NavigationContainer>
     );
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Pressable, Image } from 'react-native';
 import { AdvancedCheckbox } from 'react-native-advanced-checkbox';
 import { useLoginStyles } from './LoginStyles';
-import { getUserByEmail, saveRememberedEmail, getRememberedEmail, clearRememberedEmail } from '../../storage/userStorage';
+import { getUserByEmail, saveRememberedEmail, getRememberedEmail, clearRememberedEmail, saveLoginSession } from '../../storage/userStorage';
 import { useNavigation } from '@react-navigation/native';
 // Importar o tipo para a stack de navegação (será criado em App.tsx ou navigation file)
 import { AuthStackParamList } from '../../navigation/types'; // Exemplo de caminho
@@ -72,7 +72,9 @@ const LoginScreen = () => {
         // Verifica se o usuário existe e se a senha corresponde
         if (user && user.password === password) { // Comparação de senha (precisa de hashing seguro no futuro)
             setLoginError(''); // Limpa qualquer erro anterior
-            // Alert.alert('Sucesso', `Login realizado com sucesso! Bem-vindo(a), ${user.name || user.email}!`);
+
+            // Salva a sessão de login ANTES de navegar
+            saveLoginSession(user.email);
 
             // Lógica do "Lembrar de mim"
             if (rememberMe) {
@@ -80,6 +82,7 @@ const LoginScreen = () => {
             } else {
                 clearRememberedEmail(); // Limpa o e-mail lembrado se o checkbox não estiver marcado
             }
+
 
             navigation.reset({
                 index: 0,
