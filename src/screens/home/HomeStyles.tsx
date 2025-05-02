@@ -8,6 +8,9 @@ export const useHomeStyles = () => {
     const styles = useMemo(() => StyleSheet.create({
         container: {
             flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 30,
             backgroundColor: theme.colors.background,
         },
         loadingContainer: {
@@ -27,6 +30,8 @@ export const useHomeStyles = () => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.25)',
+            width: '100%',
+            alignItems: 'center',
         },
         taskInfo: {
             flex: 1,
@@ -40,6 +45,9 @@ export const useHomeStyles = () => {
         taskDescription: {
             ...theme.typography.regular,
             color: theme.colors.secondaryText,
+        },
+        taskCheckbox: {
+            borderRadius: 50,
         },
         // Estilos para o Empty State
         emptyContainer: {
@@ -58,7 +66,6 @@ export const useHomeStyles = () => {
             ...theme.typography.regular,
             color: theme.colors.secondaryText,
             textAlign: 'center',
-            marginBottom: 24,
         },
         // Estilos para Tags (dentro do TaskItem)
         tagsContainer: {
@@ -78,6 +85,19 @@ export const useHomeStyles = () => {
             ...theme.typography.caption,
             color: theme.colors.primary,
             fontSize: 10, // Menor para tags
+        },
+        createButton: {
+            width: '100%',
+            backgroundColor: theme.colors.primary,
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: 'center',
+            marginTop: 20,
+            marginBottom: 15,
+        },
+        createButtonText: {
+            ...theme.typography.mediumTitle,
+            color: theme.colors.secondaryBg,
         },
     }), [theme]);
     return styles;
