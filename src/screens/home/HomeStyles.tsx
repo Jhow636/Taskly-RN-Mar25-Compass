@@ -27,11 +27,9 @@ export const useHomeStyles = () => {
             padding: 15,
             borderRadius: 8,
             marginBottom: 12,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.25)',
             width: '100%',
-            alignItems: 'center',
+            alignItems: 'stretch',
         },
         taskInfo: {
             flex: 1,

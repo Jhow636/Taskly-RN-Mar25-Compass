@@ -31,9 +31,20 @@ const TaskItem = ({ task, onPress, onToggleComplete }: TaskItemProps) => {
         <Pressable onPress={onPress} style={styles.taskItem}>
             {/* Informações da Tarefa (Título, Descrição, Tags) */}
             <View style={styles.taskInfo}>
-                <Text style={styles.taskTitle}>
-                    {task.title}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.taskTitle}>
+                        {task.title}
+                    </Text>
+                    <AdvancedCheckbox
+                        value={task.isCompleted}
+                        onValueChange={onToggleComplete}
+                        checkedColor="#32C25B"
+                        uncheckedColor="#B58B46"
+                        animationType="bounce"
+                        checkBoxStyle={styles.taskCheckbox}
+                        size={20}
+                    />
+                </View>
                 {task.description && (
                     <Text style={styles.taskDescription} numberOfLines={2}>
                         {task.description}
@@ -49,19 +60,6 @@ const TaskItem = ({ task, onPress, onToggleComplete }: TaskItemProps) => {
                         ))}
                     </View>
                 )}
-            </View>
-
-            {/* Indicador de Conclusão (Checkbox simulado) */}
-            <View>
-                <AdvancedCheckbox
-                    value={task.isCompleted}
-                    onValueChange={onToggleComplete}
-                    checkedColor="#32C25B"
-                    uncheckedColor="#B58B46"
-                    animationType="bounce"
-                    checkBoxStyle={styles.taskCheckbox}
-                    size={20}
-                />
             </View>
         </Pressable>
     );
