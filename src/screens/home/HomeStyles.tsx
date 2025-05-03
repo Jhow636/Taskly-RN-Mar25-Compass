@@ -27,9 +27,9 @@ export const useHomeStyles = () => {
         // Estilos para o Item da Tarefa (TaskItem)
         taskItem: {
           backgroundColor: theme.colors.secondaryBg,
-          padding: 15,
           borderRadius: 8,
-          marginBottom: 12,
+          marginBottom: 16,
+          padding: 16,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.25,
@@ -38,21 +38,62 @@ export const useHomeStyles = () => {
           width: '100%',
           alignItems: 'stretch',
         },
-        taskInfo: {
+        taskContent: {
           flex: 1,
-          marginRight: 10,
+        },
+        taskHeader: {
+          // Container para título e checkbox
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start', // Alinha no topo para títulos longos
+          marginBottom: 8,
         },
         taskTitle: {
           ...theme.typography.subtitle,
           color: theme.colors.mainText,
           marginBottom: 4,
+          flex: 1, // Permite que o título cresça
+          marginRight: 10, // Espaço antes do checkbox
         },
         taskDescription: {
           ...theme.typography.regular,
           color: theme.colors.secondaryText,
+          marginTop: -10,
+          marginBottom: 12, // Espaço antes das tags/botão
         },
         taskCheckbox: {
           borderRadius: 50,
+          borderWidth: 2,
+        },
+        tagsListContainer: {
+          paddingBottom: 12,
+        },
+        tag: {
+          backgroundColor: theme.colors.primaryLight,
+          borderRadius: 8,
+          paddingVertical: 4,
+          paddingHorizontal: 12,
+          marginRight: 12,
+          alignSelf: 'flex-start',
+        },
+        tagText: {
+          ...theme.typography.caption,
+          color: theme.colors.mainText,
+        },
+        // Estilos para o botão "VER DETALHES"
+        detailsButton: {
+          backgroundColor: theme.colors.primary,
+          paddingVertical: 10,
+          paddingHorizontal: 8,
+          borderRadius: 8,
+          alignItems: 'center',
+          alignSelf: 'center',
+          marginTop: 8, // Espaço acima do botão se não houver tags
+        },
+        detailsButtonText: {
+          ...theme.typography.regular,
+          color: theme.colors.primaryLight,
+          textTransform: 'uppercase',
         },
         // Estilos para o Empty State
         emptyContainer: {
@@ -71,25 +112,6 @@ export const useHomeStyles = () => {
           ...theme.typography.regular,
           color: theme.colors.secondaryText,
           textAlign: 'center',
-        },
-        // Estilos para Tags (dentro do TaskItem)
-        tagsContainer: {
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          marginTop: 8,
-        },
-        tag: {
-          backgroundColor: theme.colors.primaryLight,
-          borderRadius: 4,
-          paddingVertical: 3,
-          paddingHorizontal: 8,
-          marginRight: 6,
-          marginBottom: 4,
-        },
-        tagText: {
-          ...theme.typography.caption,
-          color: theme.colors.primary,
-          fontSize: 10, // Menor para tags
         },
         createButton: {
           width: '100%',

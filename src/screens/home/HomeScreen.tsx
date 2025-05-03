@@ -1,5 +1,5 @@
 import React, {useState, useCallback} from 'react';
-import {View, Text, FlatList, Pressable, ActivityIndicator, Image} from 'react-native'; // Mantenha Modal
+import {View, Text, FlatList, Pressable, ActivityIndicator, Image} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {MainStackParamList} from '../../navigation/types';
@@ -25,10 +25,10 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
   const styles = useHomeStyles();
 
   return (
-    <Pressable onPress={onPress} style={styles.taskItem}>
+    <View style={styles.taskItem}>
       {/* Informações da Tarefa (Título, Descrição, Tags) */}
-      <View style={styles.taskInfo}>
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+      <View style={styles.taskContent}>
+        <View style={styles.taskHeader}>
           <Text style={styles.taskTitle}>{task.title}</Text>
           <AdvancedCheckbox
             value={task.isCompleted}
@@ -45,18 +45,28 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
             {task.description}
           </Text>
         )}
-        {/* Container para Tags */}
+        {/* FlatList Horizontal para Tags */}
         {task.tags && task.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {task.tags.map((tag, index) => (
-              <View key={index} style={styles.tag}>
+          <FlatList
+            horizontal
+            data={task.tags}
+            renderItem={({item: tag}) => (
+              <View style={styles.tag}>
                 <Text style={styles.tagText}>{tag.toUpperCase()}</Text>
               </View>
-            ))}
-          </View>
+            )}
+            keyExtractor={(tag, index) => `${tag}-${index}`}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tagsListContainer}
+          />
         )}
+
+        {/* Botão Ver Detalhes */}
+        <Pressable onPress={onPress} style={styles.detailsButton}>
+          <Text style={styles.detailsButtonText}>Ver Detalhes</Text>
+        </Pressable>
       </View>
-    </Pressable>
+    </View>
   );
 };
 
