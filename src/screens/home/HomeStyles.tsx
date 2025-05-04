@@ -83,7 +83,7 @@ export const useHomeStyles = () => {
         // Estilos para o botão "VER DETALHES"
         detailsButton: {
           backgroundColor: theme.colors.primary,
-          paddingVertical: 10,
+          paddingVertical: 4,
           paddingHorizontal: 8,
           borderRadius: 8,
           alignItems: 'center',

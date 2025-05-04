@@ -1,0 +1,79 @@
+import React from 'react';
+import {View, Text, Pressable, FlatList, TouchableOpacity, Image} from 'react-native';
+import {Swipeable} from 'react-native-gesture-handler';
+import {Task} from '../../data/models/Task';
+import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
+
+interface TaskDetailCardProps {
+  task: Task;
+  onEdit: () => void;
+  onToggleComplete: () => void;
+  onDelete: () => void;
+}
+
+const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCardProps) => {
+  const styles = useTaskDetailStyles();
+
+  // Função para renderizar ação de swipe para deletar a tarefa principal
+  const renderTaskDeleteAction = () => (
+    <TouchableOpacity style={styles.deleteAction} onPress={onDelete}>
+      <Image source={require('../../assets/img/delete-icon.png')} style={styles.icon} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <Swipeable renderRightActions={renderTaskDeleteAction} overshootRight={false}>
+      <View style={styles.taskCard}>
+        {/* Cabeçalho do Card */}
+        <View style={styles.cardHeader}>
+          <Text style={styles.sectionTitle}>Detalhes da Tarefa</Text>
+          <TouchableOpacity onPress={onEdit} style={styles.editIcon}>
+            <Image source={require('../../assets/img/edit-icon.png')} style={styles.icon} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Título */}
+        <Text style={styles.label}>Título</Text>
+        <Text style={styles.value}>{task.title}</Text>
+
+        {/* Descrição */}
+        <Text style={styles.label}>Descrição</Text>
+        <Text style={styles.value}>{task.description}</Text>
+
+        {/* Tags */}
+        <Text style={styles.label}>Tags</Text>
+        {task.tags && task.tags.length > 0 ? (
+          <FlatList
+            horizontal
+            data={task.tags}
+            renderItem={({item: tag}) => (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{tag.toUpperCase()}</Text>
+              </View>
+            )}
+            keyExtractor={(tag, index) => `${tag}-${index}`}
+            showsHorizontalScrollIndicator={false}
+            style={styles.tagsList}
+          />
+        ) : (
+          <Text style={styles.value}>Nenhuma tag adicionada</Text>
+        )}
+
+        {/* Prioridade */}
+        <Text style={styles.label}>Prioridade</Text>
+        <View style={[styles.priorityBadge, styles[`priority${task.priority}`]]}>
+          <Text style={styles.priorityText}>{task.priority}</Text>
+        </View>
+
+        {/* Botão Resolver/Desmarcar */}
+        <Pressable onPress={onToggleComplete} style={[styles.button, styles.resolveButton]}>
+          <Text style={styles.buttonText}>
+            {task.isCompleted ? 'MARCAR COMO NÃO CONCLUÍDA' : 'RESOLVER TAREFA'}
+          </Text>
+        </Pressable>
+      </View>
+    </Swipeable>
+  );
+};
+
+export default TaskDetailCard;

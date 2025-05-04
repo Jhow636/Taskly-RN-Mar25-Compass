@@ -11,7 +11,7 @@ import {AuthStackParamList, MainStackParamList} from './types';
 // Importar telas
 import LoginScreen from '../screens/login/LoginScreen';
 import HomeScreen from '../screens/home/HomeScreen';
-// import TaskDetailScreen from '../screens/tasks/TaskDetailScreen';
+import TaskDetailScreen from '../screens/tasks/TaskDetailScreen';
 // import EditTaskScreen from '../screens/tasks/EditTaskScreen';
 
 // importa função de verificação de sessão ativa
@@ -40,8 +40,8 @@ function MainNavigator() {
   return (
     <MainStack.Navigator screenOptions={{headerShown: false, statusBarStyle: theme.statusBarStyle}}>
       <MainStack.Screen name="Home" component={HomeScreen} />
-      {/* <MainStack.Screen name="TaskDetails" component={TaskDetailScreen} />
-            <MainStack.Screen name="EditTask" component={EditTaskScreen} /> */}
+      <MainStack.Screen name="TaskDetails" component={TaskDetailScreen} />
+      {/*<MainStack.Screen name="EditTask" component={EditTaskScreen} /> */}
       {/* Adicione outras telas principais aqui */}
     </MainStack.Navigator>
   );
