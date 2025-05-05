@@ -1,12 +1,19 @@
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import Route from './src/navigation/AppNavigator';
+import {MMKV} from 'react-native-mmkv';
+import 'react-native-gesture-handler';
+import {ThemeProvider} from './src/theme/ThemeContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
-const App: React.FC = () => {
+// Inicializa e exporta a instância do MMKV
+export const storage = new MMKV({
+  id: 'user-preferences-storage',
+});
+
+const App = () => {
   return (
-    <NavigationContainer>
-      <Route />
-    </NavigationContainer>
+    <ThemeProvider>
+      <AppNavigator />
+    </ThemeProvider>
   );
 };
 

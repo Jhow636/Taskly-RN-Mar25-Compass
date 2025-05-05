@@ -7,7 +7,7 @@ import {useTheme} from '../theme/ThemeContext';
 import {useLoginStyles} from '../screens/login/LoginStyles';
 
 // Importar tipos de navegação
-import {AuthStackParamList, MainStackParamList} from './types';
+import {AuthStackParamList} from './types';
 
 // Importar telas
 import LoginScreen from '../screens/login/LoginScreen';
@@ -61,7 +61,7 @@ function MainTabNavigator() {
       }}>
       <Tab.Screen
         name="Home"
-        component={HomeScreen} // Usando HomeScreen de develop
+        component={HomeScreen}
         options={{
           tabBarIcon: ({focused, color}) => {
             return focused ? (
@@ -71,13 +71,13 @@ function MainTabNavigator() {
             );
           },
           tabBarIconStyle: {
-            marginTop: 20, // Estilo de routes/index.tsx
+            marginTop: 20,
           },
         }}
       />
       <Tab.Screen
         name="Notifications"
-        component={NotificationsScreen} // Usando NotificationsScreen
+        component={NotificationsScreen}
         options={{
           tabBarIcon: ({color, focused}) => {
             return focused ? (
@@ -87,13 +87,13 @@ function MainTabNavigator() {
             );
           },
           tabBarIconStyle: {
-            marginTop: 20, // Estilo de routes/index.tsx
+            marginTop: 20,
           },
         }}
       />
       <Tab.Screen
         name="Menu"
-        component={MenuScreen} // Usando MenuScreen
+        component={MenuScreen}
         options={{
           tabBarIcon: ({color, focused}) => {
             return focused ? (
@@ -103,7 +103,7 @@ function MainTabNavigator() {
             );
           },
           tabBarIconStyle: {
-            marginTop: 20, // Estilo de routes/index.tsx
+            marginTop: 20,
           },
         }}
       />
