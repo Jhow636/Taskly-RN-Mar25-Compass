@@ -6,8 +6,9 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Home from '../screens/Home';
 import Notifications from '../screens/Notifications';
 import Menu from '../screens/Menu';
-
 import Icon from '@react-native-vector-icons/feather';
+
+import CircularIconButton from '../components/CircularIconButton';
 
 export default function Route() {
   const Stack = createNativeStackNavigator();
@@ -28,15 +29,19 @@ export default function Route() {
         options={{
           headerShown: false,
           tabBarLabel: '',
-          tabBarIcon: ({color}) => {
-            return (
-            <Icon name="clipboard" size={20} color={color} />
+          tabBarIcon: ({focused , color}) => {
+            return ( focused ? (
+              <CircularIconButton colorIcon={color} nameIcon='clipboard'/>
+              ) :
+
+              (
+                <Icon name="clipboard" size={20} color={color} />
+              )
             )
           },
           tabBarIconStyle: {
             marginTop: 20,
           },
-          tabBarActiveBackgroundColor: '#5B3CC4',
           tabBarActiveTintColor: '#ffffff',
           tabBarInactiveTintColor: '#5B3CC4',
         }}
@@ -47,13 +52,19 @@ export default function Route() {
         options={{
           headerShown: false,
           tabBarLabel: '',
-          tabBarIcon: ({color}) => {
-            return <Icon name="bell" size={20} color={color} />;
+          tabBarIcon: ({color, focused}) => {
+            return ( focused ? (
+              <CircularIconButton colorIcon={color} nameIcon='bell' />
+              ) :
+
+              (
+                <Icon name="bell" size={20} color={color} />
+              )
+            )
           },
           tabBarIconStyle: {
             marginTop: 20,
           },
-          tabBarActiveBackgroundColor: '#5B3CC4',
           tabBarActiveTintColor: '#ffffff',
           tabBarInactiveTintColor: '#5B3CC4',
         }}
@@ -64,13 +75,19 @@ export default function Route() {
         options={{
           headerShown: false,
           tabBarLabel: '',
-          tabBarIcon: ({color}) => {
-            return <Icon name="menu" size={20} color={color} />;
+          tabBarIcon: ({color, focused}) => {
+            return ( focused ? (
+              <CircularIconButton colorIcon={color} nameIcon='menu'/>
+              ) :
+
+              (
+                <Icon name="menu" size={20} color={color} />
+              )
+            )
           },
           tabBarIconStyle: {
             marginTop: 20,
           },
-          tabBarActiveBackgroundColor: '#5B3CC4',
           tabBarActiveTintColor: '#ffffff',
           tabBarInactiveTintColor: '#5B3CC4',
         }}
