@@ -126,8 +126,8 @@ export const useTaskDetailStyles = () => {
         textTransform: 'uppercase',
       },
       button: {
-        paddingVertical: 12,
-        paddingHorizontal: 20,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
@@ -137,10 +137,16 @@ export const useTaskDetailStyles = () => {
         ...theme.typography.regular,
         color: theme.colors.secondaryBg,
         textTransform: 'uppercase',
-        fontWeight: 'bold',
       },
       resolveButton: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderColor: theme.colors.primary,
+      },
+      resolveText: {
+        ...theme.typography.regular,
+        color: theme.colors.primary,
+        textTransform: 'uppercase',
       },
       subtasksSection: {
         marginTop: 16,
@@ -202,8 +208,8 @@ export const useTaskDetailStyles = () => {
       },
       addSubtaskButton: {
         backgroundColor: theme.colors.primary,
-        paddingVertical: 11,
-        minWidth: 100,
+        paddingVertical: 6,
+        width: '100%',
       },
       deleteAction: {
         backgroundColor: theme.colors.error,

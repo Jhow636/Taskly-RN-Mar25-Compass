@@ -67,7 +67,7 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
 
         {/* Botão Resolver/Desmarcar */}
         <Pressable onPress={onToggleComplete} style={[styles.button, styles.resolveButton]}>
-          <Text style={styles.buttonText}>
+          <Text style={styles.resolveText}>
             {task.isCompleted ? 'MARCAR COMO NÃO CONCLUÍDA' : 'RESOLVER TAREFA'}
           </Text>
         </Pressable>

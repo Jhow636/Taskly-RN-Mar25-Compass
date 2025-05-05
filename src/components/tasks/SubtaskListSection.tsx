@@ -1,9 +1,8 @@
 import React, {useState} from 'react';
-import {View, Text, FlatList, TextInput, Pressable} from 'react-native';
+import {View, Text, FlatList, Pressable} from 'react-native';
 import {Subtask} from '../../data/models/Task';
 import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
 import SubtaskItem from './SubtaskItem';
-import {useTheme} from '../../theme/ThemeContext';
 
 interface SubtaskListSectionProps {
   subtasks: Subtask[];
@@ -19,7 +18,6 @@ const SubtaskListSection = ({
   onDeleteSubtask,
 }: SubtaskListSectionProps) => {
   const styles = useTaskDetailStyles();
-  const {theme} = useTheme();
   const [newSubtaskText, setNewSubtaskText] = useState('');
 
   const handleAdd = () => {
@@ -52,17 +50,11 @@ const SubtaskListSection = ({
 
       {/* Input e Botão para Adicionar Subtarefa */}
       <View style={styles.addSubtaskContainer}>
-        <TextInput
-          style={styles.subtaskInput}
-          placeholder="Nova subtarefa..."
-          value={newSubtaskText}
-          placeholderTextColor={theme.colors.secondaryText}
-        />
         <Pressable
           onPress={handleAdd}
           style={[styles.button, styles.addSubtaskButton]}
           disabled={!newSubtaskText.trim()}>
-          <Text style={styles.buttonText}>ADICIONAR</Text>
+          <Text style={styles.buttonText}>ADICIONAR SUBTASK</Text>
         </Pressable>
       </View>
     </View>
