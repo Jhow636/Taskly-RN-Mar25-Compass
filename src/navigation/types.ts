@@ -15,5 +15,6 @@ export type MainStackParamList = {
   Home: undefined; // Tela inicial, não espera parâmetros
   TaskDetails: {taskId: string}; // Tela de detalhes, espera o ID da tarefa
   EditTask: {taskId: string}; // Tela de edição, espera o ID da tarefa
+  Preferences: undefined; // Tela de preferências, não espera parâmetros
   // Adicione outras telas principais aqui
 };

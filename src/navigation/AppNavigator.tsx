@@ -14,6 +14,8 @@ import CircularIconButton from '../components/CircularIconButton';
 import {useAuth} from '../context/AuthContext';
 import SignupScreen from '../screens/SignupScreen';
 import AvatarSelectionScreen from '../screens/AvatarSelectionScreen';
+import PreferencesScreen from '../screens/preferences/PreferencesScreen';
+import {View, ActivityIndicator} from 'react-native';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
@@ -70,6 +72,7 @@ function HomeStackNavigator() {
       }}>
       <MainStack.Screen name="Home" component={HomeScreen} />
       <MainStack.Screen name="TaskDetails" component={TaskDetailScreen} />
+      <MainStack.Screen name="Preferences" component={PreferencesScreen} />
     </MainStack.Navigator>
   );
 }
@@ -124,67 +127,26 @@ function MainTabNavigator() {
 
 // --- Root Navigator ---
 const AppNavigator = () => {
-  const {idToken} = useAuth();
-  console.log('AppNavigator rendering. Has idToken:', !!idToken);
-  return (
-    <NavigationContainer>{idToken ? <MainTabNavigator /> : <AuthNavigator />}</NavigationContainer>
-  );
-};
-
-const MainStack = createNativeStackNavigator<MainStackParamList>();
-
-function MainNavigator() {
-  return (
-    <MainStack.Navigator screenOptions={{headerShown: false}}>
-      <MainStack.Screen name="Home" component={HomeScreen} />
-      <MainStack.Screen name="Preferences" component={PreferencesScreen} />
-    </MainStack.Navigator>
-  );
-}
-
-const AppNavigator = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const {idToken, isLoading} = useAuth();
   const {theme} = useTheme();
-
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        await getLoginSession(); // Simula a verificação de login
-      } catch (error) {
-        console.error('Erro ao verificar sessão de login:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkLoginStatus();
-  }, []);
-
+  console.log('AppNavigator rendering. Has idToken:', !!idToken, 'IsLoading:', isLoading);
   if (isLoading) {
     return (
-      <View style={[styles.loadingContainer, {backgroundColor: theme.colors.background}]}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: theme.colors.background,
+        }}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer
-      theme={{
-        ...NavigationDefaultTheme,
-        colors: {...NavigationDefaultTheme.colors, ...theme.colors},
-      }}>
-      <MainNavigator />
-    </NavigationContainer>
+    <NavigationContainer>{idToken ? <MainTabNavigator /> : <AuthNavigator />}</NavigationContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default AppNavigator;
