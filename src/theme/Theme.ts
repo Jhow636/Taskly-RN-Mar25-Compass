@@ -19,5 +19,9 @@ export interface Theme {
         regular: TextStyle;
         caption: TextStyle;
     };
+    fonts?: {
+        regular: string;
+        bold: string;
+    }; // Adicione esta propriedade opcional
     statusBarStyle: 'light' | 'dark';
 }
