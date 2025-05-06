@@ -8,23 +8,28 @@ export const useHomeStyles = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
+        outerContainer: {
+          flex: 1,
+          backgroundColor: theme.colors.background,
+        },
+        contentArea: {
+          flex: 1,
+        },
+        emptyStateWrapper: {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 30,
-          backgroundColor: theme.colors.background,
         },
         loadingContainer: {
           flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
           backgroundColor: theme.colors.background,
         },
         listContentContainer: {
-          // Padding para a FlatList
           padding: 16,
-          paddingBottom: 80, // Espaço para o botão flutuante
+          paddingBottom: 10,
         },
-        // Estilos para o Item da Tarefa (TaskItem)
         taskItem: {
           backgroundColor: theme.colors.secondaryBg,
           borderRadius: 8,
@@ -42,24 +47,21 @@ export const useHomeStyles = () => {
           flex: 1,
         },
         taskHeader: {
-          // Container para título e checkbox
           flexDirection: 'row',
           justifyContent: 'space-between',
-          alignItems: 'flex-start', // Alinha no topo para títulos longos
+          alignItems: 'flex-start',
           marginBottom: 8,
         },
         taskTitle: {
           ...theme.typography.subtitle,
           color: theme.colors.mainText,
-          marginBottom: 4,
-          flex: 1, // Permite que o título cresça
-          marginRight: 10, // Espaço antes do checkbox
+          flex: 1,
+          marginRight: 10,
         },
         taskDescription: {
           ...theme.typography.regular,
           color: theme.colors.secondaryText,
-          marginTop: -10,
-          marginBottom: 12, // Espaço antes das tags/botão
+          marginBottom: 12,
         },
         taskCheckbox: {
           borderRadius: 50,
@@ -73,14 +75,13 @@ export const useHomeStyles = () => {
           borderRadius: 8,
           paddingVertical: 4,
           paddingHorizontal: 12,
-          marginRight: 12,
+          marginRight: 8,
           alignSelf: 'flex-start',
         },
         tagText: {
           ...theme.typography.caption,
           color: theme.colors.mainText,
         },
-        // Estilos para o botão "VER DETALHES"
         detailsButton: {
           backgroundColor: theme.colors.primary,
           paddingVertical: 4,
@@ -95,36 +96,47 @@ export const useHomeStyles = () => {
           color: theme.colors.primaryLight,
           textTransform: 'uppercase',
         },
-        // Estilos para o Empty State
-        emptyContainer: {
-          flex: 1,
-          justifyContent: 'center',
+        createButton: {
+          backgroundColor: theme.colors.primary,
+          paddingVertical: 12,
+          borderRadius: 8,
           alignItems: 'center',
-          padding: 30,
+          marginHorizontal: 16,
+          marginBottom: 10,
+        },
+        createButtonEmpty: {
+          marginTop: 20,
+          width: '80%',
+          alignSelf: 'center',
+          backgroundColor: theme.colors.primary,
+          paddingVertical: 12,
+          borderRadius: 8,
+          alignItems: 'center',
+          marginBottom: 10,
+        },
+        createButtonText: {
+          ...theme.typography.mediumTitle,
+          color: theme.colors.secondaryBg,
+          textTransform: 'uppercase',
+        },
+        bottomButtonContainer: {
+          padding: 16,
+          paddingTop: 0,
+          backgroundColor: theme.colors.background,
+        },
+        emptyContainer: {
+          alignItems: 'center',
+          marginTop: 50,
         },
         emptyIcon: {
-          width: 150,
-          height: 150,
-          marginBottom: 16,
-          opacity: 0.5,
+          width: 100,
+          height: 100,
+          marginBottom: 20,
         },
         emptyText: {
           ...theme.typography.regular,
           color: theme.colors.secondaryText,
           textAlign: 'center',
-        },
-        createButton: {
-          width: '100%',
-          backgroundColor: theme.colors.primary,
-          paddingVertical: 10,
-          borderRadius: 8,
-          alignItems: 'center',
-          marginTop: 20,
-          marginBottom: 15,
-        },
-        createButtonText: {
-          ...theme.typography.mediumTitle,
-          color: theme.colors.secondaryBg,
         },
       }),
     [theme],
