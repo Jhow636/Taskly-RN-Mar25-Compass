@@ -1,39 +1,19 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  StatusBar,
-  Alert,
-} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import Button from '../components/Button';
-import {UserData} from '../utils/storage';
 import {registerUser} from '../services/api';
-
-// Tipagens
-
-type RootStackParamList = {
-  Login: undefined;
-  Signup: undefined;
-  AvatarSelection: {
-    userData: Omit<UserData, 'avatarId' | 'id'>;
-    password: string;
-  };
-  Home: undefined;
-};
+import {AuthStackParamList} from '../navigation/types';
 
 type AvatarSelectionRouteProp = RouteProp<
-  RootStackParamList,
+  AuthStackParamList, // Use AuthStackParamList
   'AvatarSelection'
 >;
 type AvatarSelectionNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
+  AuthStackParamList, // Use AuthStackParamList
   'AvatarSelection'
 >;
 
@@ -66,16 +46,10 @@ const AvatarSelectionScreen: React.FC = () => {
     try {
       setLoading(true);
       const avatarId = `avatar_${selectedAvatarId}`;
-      await registerUser(
-        userData.email,
-        password,
-        userData.fullName,
-        userData.phone,
-        avatarId,
-      );
+      await registerUser(userData.email, password, userData.fullName, userData.phone, avatarId);
 
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      navigation.reset({index: 0, routes: [{name: 'Home'}]});
+      navigation.reset({index: 0, routes: [{name: 'Login'}]});
     } catch (error: any) {
       console.error(error);
       Alert.alert('Erro', error.message || 'Falha no cadastro');

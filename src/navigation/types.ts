@@ -1,7 +1,14 @@
 export type AuthStackParamList = {
   Login: undefined; // Tela de login, não espera parâmetros
-  Register: undefined; // Tela de registro, não espera parâmetros
-  // Adicione outras telas de autenticação aqui
+  Signup: undefined;
+  AvatarSelection: {
+    userData: {
+      fullName: string;
+      email: string;
+      phone: string;
+    };
+    password: string;
+  };
 };
 
 export type MainStackParamList = {

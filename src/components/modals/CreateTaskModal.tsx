@@ -16,6 +16,7 @@ import {Task} from '../../data/models/Task';
 import {saveTask} from '../../storage/taskStorage';
 import {generateUniqueId} from '../../utils/idGenerator';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import {useAuth} from '../../context/AuthContext'; // Import useAuth
 
 // --- Funções Auxiliares de Validação ---
 
@@ -47,6 +48,7 @@ interface CreateTaskModalProps {
 const CreateTaskModal = ({isVisible, onClose, onSave}: CreateTaskModalProps) => {
   const styles = useCreateTaskModalStyles();
   const {theme} = useTheme();
+  const {userId} = useAuth(); // Get userId from AuthContext
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState<Date | null>(null);
@@ -78,6 +80,11 @@ const CreateTaskModal = ({isVisible, onClose, onSave}: CreateTaskModalProps) => 
   };
 
   const handleSave = () => {
+    if (!userId) {
+      console.error('Cannot save task: User ID is not available.');
+      return;
+    }
+
     let isValid = true;
     setTitleError('');
     setDescriptionError('');
@@ -138,7 +145,7 @@ const CreateTaskModal = ({isVisible, onClose, onSave}: CreateTaskModalProps) => 
       isDeleted: false,
     };
 
-    const success = saveTask(newTask);
+    const success = saveTask(newTask, userId); // Pass userId to saveTask
     if (success) {
       console.log('Nova tarefa salva:', newTask);
       resetForm();

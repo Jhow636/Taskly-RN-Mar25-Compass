@@ -6,6 +6,7 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 import {MainStackParamList} from '../../navigation/types';
 import {Task} from '../../data/models/Task';
+import {useAuth} from '../../context/AuthContext';
 import {
   getTaskById,
   setTaskCompletion,
@@ -29,13 +30,19 @@ const TaskDetailScreen = () => {
   const route = useRoute<TaskDetailScreenRouteProp>();
   const navigation = useNavigation<TaskDetailScreenNavigationProp>();
   const {taskId} = route.params;
+  const {userId} = useAuth();
 
   const [task, setTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadTaskDetails = useCallback(() => {
+    if (!userId) {
+      setIsLoading(true);
+      setTask(null);
+      return;
+    }
     setIsLoading(true);
-    const fetchedTask = getTaskById(taskId);
+    const fetchedTask = getTaskById(taskId, userId);
     if (fetchedTask) {
       setTask(fetchedTask);
     } else {
@@ -46,7 +53,7 @@ const TaskDetailScreen = () => {
       setTask(null);
     }
     setIsLoading(false);
-  }, [taskId, navigation]);
+  }, [taskId, userId, navigation]);
 
   // Carrega a tarefa quando a tela recebe foco
   useFocusEffect(loadTaskDetails);
@@ -54,10 +61,10 @@ const TaskDetailScreen = () => {
   // --- Handlers ---
 
   const handleToggleTaskComplete = () => {
-    if (!task) {
+    if (!task || !userId) {
       return;
     }
-    const success = setTaskCompletion(task.id, !task.isCompleted);
+    const success = setTaskCompletion(task.id, !task.isCompleted, userId);
     if (success) {
       // Atualiza estado local e volta (HomeScreen vai recarregar)
       setTask(prev => (prev ? {...prev, isCompleted: !prev.isCompleted} : null));
@@ -68,16 +75,14 @@ const TaskDetailScreen = () => {
   };
 
   const handleEditTask = () => {
-    if (!task) {
+    if (!task || !userId) {
       return;
     }
-    // Navega para a tela de edição (precisa ser criada e adicionada ao AppNavigator)
-    // navigation.navigate('EditTask', { taskId: task.id });
     Alert.alert('Em breve', 'A tela de edição ainda será implementada.');
   };
 
   const handleDeleteTask = () => {
-    if (!task) {
+    if (!task || !userId) {
       return;
     }
     Alert.alert(
@@ -89,7 +94,7 @@ const TaskDetailScreen = () => {
           text: 'Excluir',
           style: 'destructive',
           onPress: () => {
-            const success = deleteTask(task.id);
+            const success = deleteTask(task.id, userId);
             if (success) {
               navigation.goBack(); // Volta para HomeScreen
             } else {
@@ -102,10 +107,10 @@ const TaskDetailScreen = () => {
   };
 
   const handleAddSubtask = (text: string) => {
-    if (!task) {
+    if (!task || !userId) {
       return;
     }
-    const success = addSubtask(task.id, text);
+    const success = addSubtask(task.id, text, userId);
     if (success) {
       loadTaskDetails(); // Recarrega os detalhes para mostrar a nova subtarefa
     } else {
@@ -114,7 +119,7 @@ const TaskDetailScreen = () => {
   };
 
   const handleToggleSubtaskComplete = (subtaskId: string) => {
-    if (!task) {
+    if (!task || !userId) {
       return;
     }
     const subtask = task.subtasks.find(sub => sub.id === subtaskId);
@@ -122,7 +127,7 @@ const TaskDetailScreen = () => {
       return;
     }
 
-    const success = setSubtaskCompletion(task.id, subtaskId, !subtask.isCompleted);
+    const success = setSubtaskCompletion(task.id, subtaskId, !subtask.isCompleted, userId);
     if (success) {
       loadTaskDetails(); // Recarrega para refletir a mudança
     } else {
@@ -131,7 +136,7 @@ const TaskDetailScreen = () => {
   };
 
   const handleDeleteSubtask = (subtaskId: string) => {
-    if (!task) {
+    if (!task || !userId) {
       return;
     }
     Alert.alert('Confirmar Exclusão', 'Tem certeza que deseja excluir esta subtarefa?', [
@@ -140,7 +145,7 @@ const TaskDetailScreen = () => {
         text: 'Excluir',
         style: 'destructive',
         onPress: () => {
-          const success = deleteSubtask(task.id, subtaskId);
+          const success = deleteSubtask(task.id, subtaskId, userId);
           if (success) {
             loadTaskDetails(); // Recarrega para remover a subtarefa da lista
           } else {
