@@ -7,6 +7,7 @@ import {Task} from '../../data/models/Task';
 import {getAllTasks, setTaskCompletion} from '../../storage/taskStorage';
 import {useHomeStyles} from './HomeStyles';
 import {useTheme} from '../../theme/ThemeContext';
+import {useAuth} from '../../context/AuthContext';
 import CreateTaskModal from '../../components/modals/CreateTaskModal';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import Header from '../../components/Header';
@@ -66,26 +67,34 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
   );
 };
 
-// --- HomeScreen ---
 const HomeScreen = () => {
   const styles = useHomeStyles();
   const {theme} = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const {userId} = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const loadTasks = useCallback(() => {
+    if (!userId) {
+      console.log('HomeScreen: No userId, cannot load tasks.');
+      setTasks([]);
+      setIsLoading(false);
+      return;
+    }
+    console.log(`HomeScreen: Loading tasks for userId: ${userId}`);
     setIsLoading(true);
     try {
-      const storedTasks = getAllTasks();
+      const storedTasks = getAllTasks(userId);
       setTasks(storedTasks);
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);
+      setTasks([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   const openCreateModal = () => setIsModalVisible(true);
   const closeCreateModal = () => setIsModalVisible(false);
@@ -97,8 +106,11 @@ const HomeScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('HomeScreen focused, attempting to load tasks.');
       loadTasks();
-      return () => {};
+      return () => {
+        console.log('HomeScreen unfocused.');
+      };
     }, [loadTasks]),
   );
 
@@ -107,9 +119,13 @@ const HomeScreen = () => {
   };
 
   const handleToggleComplete = (taskId: string) => {
+    if (!userId) {
+      console.error('Cannot toggle task completion: User ID is not available.');
+      return;
+    }
     const task = tasks.find(t => t.id === taskId);
     if (task) {
-      const success = setTaskCompletion(taskId, !task.isCompleted);
+      const success = setTaskCompletion(taskId, !task.isCompleted, userId);
       if (success) {
         setTasks(prevTasks =>
           prevTasks.map(t =>
@@ -131,7 +147,7 @@ const HomeScreen = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !userId) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -145,7 +161,7 @@ const HomeScreen = () => {
     <View style={styles.outerContainer}>
       <Header />
       <View style={styles.contentArea}>
-        {!hasTasks ? (
+        {!hasTasks && userId ? (
           <View style={styles.emptyStateWrapper}>
             <EmptyStateComponent />
             <Pressable
@@ -154,7 +170,7 @@ const HomeScreen = () => {
               <Text style={styles.createButtonText}>Criar Tarefa</Text>
             </Pressable>
           </View>
-        ) : (
+        ) : hasTasks && userId ? (
           <FlatList
             data={tasks}
             renderItem={({item}) => (
@@ -167,17 +183,24 @@ const HomeScreen = () => {
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContentContainer}
           />
+        ) : (
+          <View style={styles.loadingContainer}>
+            {isLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+            {!isLoading && !userId && <Text>Por favor, faça login para ver suas tarefas.</Text>}
+          </View>
         )}
       </View>
 
-      <View style={styles.bottomButtonContainer}>
-        {hasTasks && (
-          <Pressable onPress={openCreateModal} style={styles.createButton}>
-            <Text style={styles.createButtonText}>Criar Tarefa</Text>
-          </Pressable>
-        )}
-        <LogoutButton />
-      </View>
+      {userId && (
+        <View style={styles.bottomButtonContainer}>
+          {hasTasks && (
+            <Pressable onPress={openCreateModal} style={styles.createButton}>
+              <Text style={styles.createButtonText}>Criar Tarefa</Text>
+            </Pressable>
+          )}
+          <LogoutButton />
+        </View>
+      )}
 
       <CreateTaskModal
         isVisible={isModalVisible}
