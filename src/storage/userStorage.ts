@@ -4,7 +4,6 @@ import {storage} from '../../App'; // Importa a instância MMKV do App.tsx
 export interface User {
   id: string;
   email: string;
-  password: string; // Senha deve ser armazenada de forma segura (hash)
   name?: string;
 }
 
@@ -59,7 +58,6 @@ export const getUserByEmail = (email: string): User | null => {
 };
 
 const REMEMBERED_EMAIL_KEY = 'rememberedUserEmail'; // Chave para o email lembrado
-const ACTIVE_LOGIN_SESSION_KEY = 'activeLoginSessionEmail'; // Chave para a sessão ativa
 
 /**
  * Salva o e-mail do usuário para ser lembrado no próximo login.
@@ -95,45 +93,6 @@ export const clearRememberedEmail = (): void => {
     storage.delete(REMEMBERED_EMAIL_KEY); // Remove o e-mail do MMKV
   } catch (error) {
     console.error('Erro ao limpar e-mail lembrado:', error);
-  }
-};
-
-/**
- * Salva o e-mail do usuário que acabou de fazer login como sessão ativa.
- * @param email O e-mail do usuário logado.
- */
-export const saveLoginSession = (email: string): void => {
-  try {
-    storage.set(ACTIVE_LOGIN_SESSION_KEY, email);
-    console.log(`Sessão de login salva para: ${email}`);
-  } catch (error) {
-    console.error('Erro ao salvar sessão de login:', error);
-  }
-};
-
-/**
- * Busca o e-mail da sessão de login ativa no MMKV.
- * @returns O e-mail da sessão ativa ou null se não houver sessão.
- */
-export const getLoginSession = (): string | null => {
-  try {
-    const email = storage.getString(ACTIVE_LOGIN_SESSION_KEY);
-    return email || null;
-  } catch (error) {
-    console.error('Erro ao buscar sessão de login:', error);
-    return null;
-  }
-};
-
-/**
- * Remove a sessão de login ativa do MMKV (logout).
- */
-export const clearLoginSession = (): void => {
-  try {
-    storage.delete(ACTIVE_LOGIN_SESSION_KEY);
-    console.log('Sessão de login removida com sucesso.');
-  } catch (error) {
-    console.error('Erro ao remover sessão de login:', error);
   }
 };
 
@@ -181,5 +140,65 @@ export const getAllUsers = (): User[] => {
   } catch (error) {
     console.error('Erro ao buscar todos os usuários:', error);
     return []; // Retorna uma lista vazia em caso de erro
+  }
+};
+
+// --- Authentication Token Keys ---
+const ID_TOKEN_KEY = 'authTokenId';
+const REFRESH_TOKEN_KEY = 'authTokenRefresh';
+
+/**
+ * Saves the ID token and refresh token to MMKV storage.
+ * @param idToken The authentication ID token.
+ * @param refreshToken The refresh token.
+ */
+export const saveAuthTokens = (idToken: string, refreshToken: string): void => {
+  try {
+    storage.set(ID_TOKEN_KEY, idToken);
+    storage.set(REFRESH_TOKEN_KEY, refreshToken);
+    console.log('Auth tokens saved successfully.');
+  } catch (error) {
+    console.error('Error saving auth tokens:', error);
+  }
+};
+
+/**
+ * Retrieves the ID token from MMKV storage.
+ * @returns The stored ID token or null if not found or on error.
+ */
+export const getIdToken = (): string | null => {
+  try {
+    const token = storage.getString(ID_TOKEN_KEY);
+    return token || null;
+  } catch (error) {
+    console.error('Error retrieving ID token:', error);
+    return null;
+  }
+};
+
+/**
+ * Retrieves the refresh token from MMKV storage.
+ * @returns The stored refresh token or null if not found or on error.
+ */
+export const getRefreshToken = (): string | null => {
+  try {
+    const token = storage.getString(REFRESH_TOKEN_KEY);
+    return token || null;
+  } catch (error) {
+    console.error('Error retrieving refresh token:', error);
+    return null;
+  }
+};
+
+/**
+ * Removes both the ID token and refresh token from MMKV storage (logout).
+ */
+export const clearAuthTokens = (): void => {
+  try {
+    storage.delete(ID_TOKEN_KEY);
+    storage.delete(REFRESH_TOKEN_KEY);
+    console.log('Auth tokens cleared successfully.');
+  } catch (error) {
+    console.error('Error clearing auth tokens:', error);
   }
 };

@@ -1,32 +1,30 @@
 import React, {useState, useCallback} from 'react';
-import {View, Text, FlatList, Pressable, ActivityIndicator, Image} from 'react-native';
+import {View, Text, FlatList, Pressable, ActivityIndicator} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {MainStackParamList} from '../../navigation/types';
-import {Task} from '../../data/models/Task'; // Importa Task
-import {getAllTasks, setTaskCompletion} from '../../storage/taskStorage'; // Importa funções de storage
-import {useHomeStyles} from './HomeStyles'; // Estilos para esta tela
-import {useTheme} from '../../theme/ThemeContext'; // Contexto do tema
+import {Task} from '../../data/models/Task';
+import {getAllTasks, setTaskCompletion} from '../../storage/taskStorage';
+import {useHomeStyles} from './HomeStyles';
+import {useTheme} from '../../theme/ThemeContext';
 import CreateTaskModal from '../../components/modals/CreateTaskModal';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
+import Header from '../../components/Header';
+import EmptyStateComponent from '../../components/EmptyState.tsx';
 
-// Define o tipo de navegação para esta tela
 type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Home'>;
 
-// --- Componente para o Item da Tarefa ---
-// (Pode ser movido para src/components/TaskItem.tsx depois)
 interface TaskItemProps {
   task: Task;
   onPress: () => void;
   onToggleComplete: () => void;
 }
 
+// TaskItem component remains the same
 const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
   const styles = useHomeStyles();
-
   return (
     <View style={styles.taskItem}>
-      {/* Informações da Tarefa (Título, Descrição, Tags) */}
       <View style={styles.taskContent}>
         <View style={styles.taskHeader}>
           <Text style={styles.taskTitle}>{task.title}</Text>
@@ -45,7 +43,6 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
             {task.description}
           </Text>
         )}
-        {/* FlatList Horizontal para Tags */}
         {task.tags && task.tags.length > 0 && (
           <FlatList
             horizontal
@@ -60,8 +57,6 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
             contentContainerStyle={styles.tagsListContainer}
           />
         )}
-
-        {/* Botão Ver Detalhes */}
         <Pressable onPress={onPress} style={styles.detailsButton}>
           <Text style={styles.detailsButtonText}>Ver Detalhes</Text>
         </Pressable>
@@ -70,32 +65,15 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
   );
 };
 
-// --- Componente para o Estado Vazio ---
-const EmptyState = () => {
-  const styles = useHomeStyles();
-  return (
-    <View style={styles.emptyContainer}>
-      {/* Use um ícone apropriado */}
-      <Image
-        source={require('../../assets/img/empty-face.png')} // Crie ou use um ícone
-        style={styles.emptyIcon}
-        resizeMode="contain"
-      />
-      <Text style={styles.emptyText}>No momento você não possui tarefas. Que tal criar uma?</Text>
-    </View>
-  );
-};
-
-// --- Tela Principal (HomeScreen / TaskListScreen) ---
+// --- HomeScreen ---
 const HomeScreen = () => {
   const styles = useHomeStyles();
   const {theme} = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false); // Estado para visibilidade do modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Função para carregar as tarefas do MMKV
   const loadTasks = useCallback(() => {
     setIsLoading(true);
     try {
@@ -103,71 +81,55 @@ const HomeScreen = () => {
       setTasks(storedTasks);
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);
-      // Tratar erro (ex: mostrar mensagem para o usuário)
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const openCreateModal = () => {
-    setIsModalVisible(true);
-  };
-
-  const closeCreateModal = () => {
-    setIsModalVisible(false);
-  };
+  const openCreateModal = () => setIsModalVisible(true);
+  const closeCreateModal = () => setIsModalVisible(false);
 
   const handleTaskSaved = () => {
     closeCreateModal();
     loadTasks();
   };
 
-  // useFocusEffect para recarregar as tarefas quando a tela recebe foco
   useFocusEffect(
     useCallback(() => {
       loadTasks();
-      // Função de cleanup (opcional)
-      return () => {
-        // console.log("Saindo da tela Home");
-      };
-    }, [loadTasks]), // Dependência: loadTasks
+      return () => {};
+    }, [loadTasks]),
   );
 
-  // Navega para a tela de detalhes da tarefa
   const handleTaskPress = (taskId: string) => {
     navigation.navigate('TaskDetails', {taskId});
   };
 
-  // Alterna o status de conclusão da tarefa
   const handleToggleComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
       const success = setTaskCompletion(taskId, !task.isCompleted);
       if (success) {
-        // Atualiza o estado local para refletir a mudança imediatamente
         setTasks(prevTasks =>
-          prevTasks.map(
-            t =>
-              t.id === taskId
-                ? {
-                    ...t,
-                    isCompleted: !t.isCompleted,
-                    subtasks: t.subtasks.map(sub => ({
-                      ...sub,
-                      isCompleted: !task.isCompleted ? true : sub.isCompleted,
-                    })),
-                  }
-                : t, // Atualiza subtarefas se necessário
+          prevTasks.map(t =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  isCompleted: !t.isCompleted,
+                  subtasks: t.subtasks.map(sub => ({
+                    ...sub,
+                    isCompleted: !task.isCompleted ? true : sub.isCompleted,
+                  })),
+                }
+              : t,
           ),
         );
       } else {
         console.error('Falha ao atualizar status da tarefa:', taskId);
-        // Mostrar erro ao usuário, se necessário
       }
     }
   };
 
-  // Renderiza o indicador de loading
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -176,26 +138,45 @@ const HomeScreen = () => {
     );
   }
 
+  const hasTasks = tasks.length > 0;
+
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={tasks}
-        renderItem={({item}) => (
-          <TaskItem
-            task={item}
-            onPress={() => handleTaskPress(item.id)}
-            onToggleComplete={() => handleToggleComplete(item.id)}
+    <View style={styles.outerContainer}>
+      <Header />
+      <View style={styles.contentArea}>
+        {!hasTasks ? (
+          <View style={styles.emptyStateWrapper}>
+            <EmptyStateComponent />
+            <Pressable
+              onPress={openCreateModal}
+              style={[styles.createButton, styles.createButtonEmpty]}>
+              <Text style={styles.createButtonText}>Criar Tarefa</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <FlatList
+            data={tasks}
+            renderItem={({item}) => (
+              <TaskItem
+                task={item}
+                onPress={() => handleTaskPress(item.id)}
+                onToggleComplete={() => handleToggleComplete(item.id)}
+              />
+            )}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContentContainer}
           />
         )}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContentContainer}
-        ListEmptyComponent={<EmptyState />} // Componente para lista vazia
-      />
-      <Pressable onPress={openCreateModal} style={styles.createButton}>
-        <Text style={styles.createButtonText}>Criar Tarefa</Text>
-      </Pressable>
+      </View>
 
-      {/* Renderiza o Modal de Criação */}
+      <View style={styles.bottomButtonContainer}>
+        {hasTasks && (
+          <Pressable onPress={openCreateModal} style={styles.createButton}>
+            <Text style={styles.createButtonText}>Criar Tarefa</Text>
+          </Pressable>
+        )}
+      </View>
+
       <CreateTaskModal
         isVisible={isModalVisible}
         onClose={closeCreateModal}

@@ -1,8 +1,9 @@
 import React from 'react';
-import { MMKV } from 'react-native-mmkv';
+import {MMKV} from 'react-native-mmkv';
 import 'react-native-gesture-handler';
-import { ThemeProvider } from './src/theme/ThemeContext';
+import {ThemeProvider} from './src/theme/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import {AuthProvider} from './src/context/AuthContext'; // Import AuthProvider
 
 // Inicializa e exporta a instância do MMKV
 export const storage = new MMKV({
@@ -12,7 +13,9 @@ export const storage = new MMKV({
 const App = () => {
   return (
     <ThemeProvider>
-      <AppNavigator />
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
     </ThemeProvider>
   );
 };

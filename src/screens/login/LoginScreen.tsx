@@ -1,44 +1,41 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, Pressable, Image} from 'react-native';
+import {View, Text, TextInput, Pressable, Image, ActivityIndicator, Alert} from 'react-native';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import {useLoginStyles} from './LoginStyles';
+import {useTheme} from '../../theme/ThemeContext';
 import {
-  getUserByEmail,
   saveRememberedEmail,
   getRememberedEmail,
   clearRememberedEmail,
-  saveLoginSession,
 } from '../../storage/userStorage';
 import {useNavigation} from '@react-navigation/native';
-// Importar o tipo para a stack de navegação (será criado em App.tsx ou navigation file)
-import {AuthStackParamList} from '../../navigation/types'; // Exemplo de caminho
+import {AuthStackParamList} from '../../navigation/types';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {loginUser, CustomApiError} from '../../services/api';
+import {useAuth} from '../../context/AuthContext';
 
-// Regex simples para validação de e-mail
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Definindo o tipo de navegação para a tela de login
-type LoginScreenNavigationProp = NativeStackNavigationProp<
-  AuthStackParamList,
-  'Login' // Nome desta tela na stack de navegação
->;
+type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
 const LoginScreen = () => {
   const styles = useLoginStyles();
+  const {theme} = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // Estado para Checkbox "Lembrar de mim"
+  const [rememberMe, setRememberMe] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [loginError, setLoginError] = useState(''); // Estado para erro genérico
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const auth = useAuth();
 
-  // Efeito para carregar o e-mail lembrado (se houver)
   useEffect(() => {
-    const rememberedEmail = getRememberedEmail(); // Busca o e-mail lembrado
+    const rememberedEmail = getRememberedEmail();
     if (rememberedEmail) {
-      setEmail(rememberedEmail); // Preenche o campo de e-mail com o e-mail lembrado
-      setRememberMe(true); // Marca o checkbox como selecionado
+      setEmail(rememberedEmail);
+      setRememberMe(true);
     }
   }, []);
 
@@ -46,7 +43,7 @@ const LoginScreen = () => {
     let isValid = true;
     setEmailError('');
     setPasswordError('');
-    setLoginError(''); // Limpa o erro genérico ao tentar validar novamente
+    setLoginError('');
 
     if (!email.trim()) {
       setEmailError('Por favor, preencha o e-mail.');
@@ -63,46 +60,46 @@ const LoginScreen = () => {
       setPasswordError('A senha deve ter pelo menos 8 caracteres.');
       isValid = false;
     }
-
     return isValid;
   };
 
-  const handleLogin = () => {
-    if (!validateInputs()) {
-      return; // Se a validação falhar, não prossegue com o login
+  const handleLogin = async () => {
+    if (!validateInputs() || isLoggingIn) {
+      return;
     }
 
-    // Busca o usuário pelo e-mail no MMKV
-    const user = getUserByEmail(email);
+    setIsLoggingIn(true);
+    setLoginError('');
 
-    // Verifica se o usuário existe e se a senha corresponde
-    if (user && user.password === password) {
-      // Comparação de senha (precisa de hashing seguro no futuro)
-      setLoginError(''); // Limpa qualquer erro anterior
+    try {
+      const {id_token, refresh_token} = await loginUser(email, password);
+      auth.login(id_token, refresh_token);
 
-      // Salva a sessão de login ANTES de navegar
-      saveLoginSession(user.email);
-
-      // Lógica do "Lembrar de mim"
       if (rememberMe) {
-        saveRememberedEmail(email); // Salva o e-mail se o checkbox estiver marcado
+        saveRememberedEmail(email);
       } else {
-        clearRememberedEmail(); // Limpa o e-mail lembrado se o checkbox não estiver marcado
+        clearRememberedEmail();
       }
-
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Home' as any}],
-      });
-    } else {
-      // Usuário não encontrado ou senha incorreta
-      setLoginError('E-mail ou senha incorretos.');
+    } catch (error) {
+      console.error('LoginScreen handleLogin Error:', error);
+      if (error instanceof CustomApiError) {
+        if (error.status === 401) {
+          setLoginError('E-mail ou senha incorretos.');
+        } else if (error.status === -1) {
+          setLoginError('Falha na conexão. Verifique sua internet.');
+        } else {
+          setLoginError(error.message || 'Ocorreu um erro durante o login.');
+        }
+      } else {
+        setLoginError('Ocorreu um erro inesperado.');
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const navigateToRegister = () => {
-    // Navegar para a tela de Cadastro (ex: 'Register')
-    navigation.navigate('Register');
+    Alert.alert('Em breve', 'A tela de cadastro ainda será implementada.');
   };
 
   return (
@@ -117,17 +114,18 @@ const LoginScreen = () => {
         onChangeText={text => {
           setEmail(text);
           if (emailError) {
-            setEmailError(''); // Limpa o erro ao digitar
+            setEmailError('');
           }
           if (loginError) {
-            setLoginError(''); // Limpa o erro genérico ao digitar
+            setLoginError('');
           }
         }}
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
+        editable={!isLoggingIn}
       />
-      <Text style={[styles.errorText, {opacity: Number(!!emailError)}]}>{emailError || ''}</Text>
+      <Text style={[styles.errorText, {opacity: Number(!!emailError)}]}>{emailError || ' '}</Text>
 
       <Text style={styles.label}>Senha</Text>
       <TextInput
@@ -146,21 +144,18 @@ const LoginScreen = () => {
         secureTextEntry
         autoCapitalize="none"
         autoComplete="password"
+        editable={!isLoggingIn}
       />
       <Text style={[styles.errorText, {opacity: Number(!!passwordError)}]}>
-        {passwordError || ''}
+        {passwordError || ' '}
       </Text>
 
-      <Text style={[styles.errorText, {opacity: Number(!!loginError)}]}>{loginError || ''}</Text>
+      <Text style={[styles.errorText, {opacity: Number(!!loginError)}]}>{loginError || ' '}</Text>
 
-      {/* Checkbox "Lembrar de mim" */}
       <View style={styles.checkboxContainer}>
         <AdvancedCheckbox
           value={rememberMe}
-          onValueChange={newValue => {
-            setRememberMe(!!newValue);
-            console.log('Checkbox clicked, new value:', newValue, 'isChecked:', !!newValue);
-          }}
+          onValueChange={newValue => setRememberMe(!!newValue)}
           label="Lembrar de mim"
           labelPosition="right"
           labelStyle={styles.checkboxLabel}
@@ -170,14 +165,25 @@ const LoginScreen = () => {
           uncheckedColor="#B58B46"
           animationType="bounce"
           size={18}
+          disabled={isLoggingIn}
         />
       </View>
 
-      <Pressable onPress={handleLogin} style={styles.buttonPrimary}>
-        <Text style={styles.buttonPrimaryText}>Entrar</Text>
+      <Pressable
+        onPress={handleLogin}
+        style={[styles.buttonPrimary, isLoggingIn && styles.buttonDisabled]}
+        disabled={isLoggingIn}>
+        {isLoggingIn ? (
+          <ActivityIndicator color={theme.colors.secondaryBg} />
+        ) : (
+          <Text style={styles.buttonPrimaryText}>Entrar</Text>
+        )}
       </Pressable>
 
-      <Pressable onPress={navigateToRegister} style={styles.buttonSecondary}>
+      <Pressable
+        onPress={navigateToRegister}
+        style={[styles.buttonSecondary, isLoggingIn && styles.buttonDisabled]}
+        disabled={isLoggingIn}>
         <Text style={styles.buttonSecondaryText}>Criar Conta</Text>
       </Pressable>
     </View>
