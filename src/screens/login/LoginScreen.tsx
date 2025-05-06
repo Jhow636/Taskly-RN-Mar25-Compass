@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, Pressable, Image, ActivityIndicator, Alert} from 'react-native';
+import {View, Text, TextInput, Pressable, Image, ActivityIndicator} from 'react-native';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import {useLoginStyles} from './LoginStyles';
 import {useTheme} from '../../theme/ThemeContext';
@@ -98,8 +98,8 @@ const LoginScreen = () => {
     }
   };
 
-  const navigateToRegister = () => {
-    Alert.alert('Em breve', 'A tela de cadastro ainda será implementada.');
+  const navigateToSignup = () => {
+    navigation.navigate('Signup');
   };
 
   return (
@@ -181,7 +181,7 @@ const LoginScreen = () => {
       </Pressable>
 
       <Pressable
-        onPress={navigateToRegister}
+        onPress={navigateToSignup}
         style={[styles.buttonSecondary, isLoggingIn && styles.buttonDisabled]}
         disabled={isLoggingIn}>
         <Text style={styles.buttonSecondaryText}>Criar Conta</Text>

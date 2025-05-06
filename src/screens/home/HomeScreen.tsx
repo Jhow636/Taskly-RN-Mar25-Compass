@@ -11,6 +11,7 @@ import CreateTaskModal from '../../components/modals/CreateTaskModal';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import Header from '../../components/Header';
 import EmptyStateComponent from '../../components/EmptyState.tsx';
+import LogoutButton from '../../components/LogoutButton';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Home'>;
 
@@ -175,6 +176,7 @@ const HomeScreen = () => {
             <Text style={styles.createButtonText}>Criar Tarefa</Text>
           </Pressable>
         )}
+        <LogoutButton />
       </View>
 
       <CreateTaskModal

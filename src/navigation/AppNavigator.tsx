@@ -12,6 +12,8 @@ import MenuScreen from '../screens/Menu';
 import Icon from '@react-native-vector-icons/feather';
 import CircularIconButton from '../components/CircularIconButton';
 import {useAuth} from '../context/AuthContext';
+import SignupScreen from '../screens/SignupScreen';
+import AvatarSelectionScreen from '../screens/AvatarSelectionScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
@@ -52,6 +54,8 @@ function AuthNavigator() {
         statusBarStyle: theme.statusBarStyle,
       }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Signup" component={SignupScreen} />
+      <AuthStack.Screen name="AvatarSelection" component={AvatarSelectionScreen} />
     </AuthStack.Navigator>
   );
 }
