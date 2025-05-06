@@ -1,6 +1,6 @@
+import {useMemo} from 'react';
 import {StyleSheet} from 'react-native';
 import {useTheme} from '../../theme/ThemeContext';
-import {useMemo} from 'react';
 
 export const useLoginStyles = () => {
   const {theme} = useTheme();
@@ -12,7 +12,7 @@ export const useLoginStyles = () => {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 30, // Aumentar padding
+          padding: 30,
           backgroundColor: theme.colors.background,
         },
         loadingContainer: {
@@ -22,16 +22,15 @@ export const useLoginStyles = () => {
           backgroundColor: theme.colors.background,
         },
         logo: {
-          width: '100%',
           height: 56,
-          marginBottom: 24,
+          marginBottom: 40,
+          resizeMode: 'contain',
         },
         label: {
           ...theme.typography.caption,
           color: theme.colors.mainText,
           alignSelf: 'flex-start',
           marginBottom: 5,
-          marginLeft: 10, // Pequeno espaço à esquerda
         },
         input: {
           width: '100%',
@@ -39,7 +38,7 @@ export const useLoginStyles = () => {
           backgroundColor: theme.colors.secondaryBg,
           borderRadius: 8,
           paddingHorizontal: 15,
-          marginBottom: 5, // Espaço antes da mensagem de erro
+          marginBottom: 5,
           ...theme.typography.regular,
           color: theme.colors.mainText,
           borderWidth: 2,
@@ -50,12 +49,13 @@ export const useLoginStyles = () => {
           color: theme.colors.error,
           alignSelf: 'flex-start',
           marginLeft: 5,
-          marginBottom: 12, // Espaço depois da mensagem de erro
-          height: 15, // Reserva o espaço mesmo sem erro
+          marginBottom: 12,
+          height: 15,
         },
         checkboxContainer: {
           alignItems: 'center',
           alignSelf: 'flex-start',
+          marginVertical: 15,
         },
         checkbox: {
           borderRadius: 2,
@@ -63,6 +63,7 @@ export const useLoginStyles = () => {
         checkboxLabel: {
           ...theme.typography.regular,
           color: theme.colors.mainText,
+          marginLeft: 8,
         },
         buttonPrimary: {
           width: '100%',
@@ -70,8 +71,8 @@ export const useLoginStyles = () => {
           paddingVertical: 10,
           borderRadius: 8,
           alignItems: 'center',
-          marginTop: 20, // Espaço acima do botão primário
-          marginBottom: 15, // Espaço entre botões
+          marginTop: 20,
+          marginBottom: 15,
         },
         buttonSecondary: {
           width: '100%',
@@ -91,6 +92,9 @@ export const useLoginStyles = () => {
           ...theme.typography.mediumTitle,
           color: theme.colors.primary,
           textTransform: 'uppercase',
+        },
+        buttonDisabled: {
+          opacity: 0.6,
         },
       }),
     [theme],
