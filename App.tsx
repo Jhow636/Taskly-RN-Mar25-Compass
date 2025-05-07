@@ -5,7 +5,6 @@ import {ThemeProvider} from './src/theme/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import {AuthProvider} from './src/context/AuthContext';
 
-// Inicializa e exporta a instância do MMKV
 export const storage = new MMKV({
   id: 'user-preferences-storage',
 });

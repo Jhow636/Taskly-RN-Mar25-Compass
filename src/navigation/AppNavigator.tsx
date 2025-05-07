@@ -8,12 +8,19 @@ import LoginScreen from '../screens/login/LoginScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import TaskDetailScreen from '../screens/tasks/TaskDetailScreen';
 import NotificationsScreen from '../screens/Notifications';
-import MenuScreen from '../screens/Menu';
+
 import Icon from '@react-native-vector-icons/feather';
 import CircularIconButton from '../components/CircularIconButton';
 import {useAuth} from '../context/AuthContext';
 import SignupScreen from '../screens/SignupScreen';
 import AvatarSelectionScreen from '../screens/AvatarSelectionScreen';
+import PreferencesScreen from '../screens/preferences/PreferencesScreen';
+import {View, ActivityIndicator} from 'react-native';
+
+import Terms from '../screens/Terms';
+import Menu from '../screens/Menu';
+import Preferencies from '../screens/Preferencies/Index';
+import AvatarUpdate from '../screens/AvatarUpdate';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
@@ -70,6 +77,24 @@ function HomeStackNavigator() {
       }}>
       <MainStack.Screen name="Home" component={HomeScreen} />
       <MainStack.Screen name="TaskDetails" component={TaskDetailScreen} />
+      <MainStack.Screen name="Preferences" component={PreferencesScreen} />
+    </MainStack.Navigator>
+  );
+}
+
+function MenuStackNavigator() {
+  const {theme} = useTheme();
+  return (
+    <MainStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        statusBarStyle: theme.statusBarStyle,
+      }}>
+      <MainStack.Screen name="Home" component={Menu} />
+      <MainStack.Screen name="Terms" component={Terms} />
+      <MainStack.Screen name="Preferencies" component={Preferencies} />
+      <MainStack.Screen name="DarkMode" component={PreferencesScreen} />
+      <MainStack.Screen name="AvatarUpdate" component={AvatarUpdate} />
     </MainStack.Navigator>
   );
 }
@@ -109,8 +134,8 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Menu"
-        component={MenuScreen}
+        name="MenuStackNavigator"
+        component={MenuStackNavigator}
         options={{
           tabBarIcon: renderMenuIcon,
           tabBarIconStyle: {
@@ -124,8 +149,23 @@ function MainTabNavigator() {
 
 // --- Root Navigator ---
 const AppNavigator = () => {
-  const {idToken} = useAuth();
-  console.log('AppNavigator rendering. Has idToken:', !!idToken);
+  const {idToken, isLoading} = useAuth();
+  const {theme} = useTheme();
+  console.log('AppNavigator rendering. Has idToken:', !!idToken, 'IsLoading:', isLoading);
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: theme.colors.background,
+        }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>{idToken ? <MainTabNavigator /> : <AuthNavigator />}</NavigationContainer>
   );
