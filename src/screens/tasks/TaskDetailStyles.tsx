@@ -11,17 +11,15 @@ export const useTaskDetailStyles = () => {
     const getPriorityStyles = (priority: Priority) => {
       switch (priority) {
         case 'ALTA':
-          return {backgroundColor: theme.colors.secondaryAccent, color: theme.colors.secondaryBg};
+          return {backgroundColor: theme.colors.secondaryAccent};
         case 'BAIXA':
           return {
-            backgroundColor: theme.colors.secondaryAccent + '30',
-            color: theme.colors.secondaryBg,
+            backgroundColor: theme.colors.secondaryAccent,
           };
         case 'MÉDIA':
         default:
           return {
-            backgroundColor: theme.colors.secondaryAccent + '30',
-            color: theme.colors.secondaryBg,
+            backgroundColor: theme.colors.secondaryAccent ,
           };
       }
     };
@@ -121,9 +119,9 @@ export const useTaskDetailStyles = () => {
       priorityMÉDIA: getPriorityStyles('MÉDIA'),
       priorityBAIXA: getPriorityStyles('BAIXA'),
       priorityText: {
-        ...theme.typography.caption,
-        fontWeight: 'bold',
+        ...theme.typography.regular,
         textTransform: 'uppercase',
+        color: "#fff"
       },
       button: {
         paddingVertical: 4,
