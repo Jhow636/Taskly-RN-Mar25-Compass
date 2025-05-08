@@ -35,10 +35,13 @@ export const saveTask = (task: Task, userId: string): boolean => {
   try {
     const taskKey = getUserTaskKey(userId, task.id);
     task.updatedAt = new Date().toISOString();
+    // Sempre marcar como needsSync se não for uma operação vinda da API
+    // A flag isDeleted já é tratada por quem chama saveTask (ex: deleteTask)
+    // Se a tarefa está sendo explicitamente marcada como deletada, ela ainda precisa de sync para o delete.
     task.needsSync = true;
     const taskJson = JSON.stringify(task);
     storage.set(taskKey, taskJson);
-    console.log(`Tarefa ${task.id} salva para o usuário ${userId}.`);
+    console.log(`Tarefa ${task.id} (userId: ${userId}) salva e marcada para sincronização.`);
     return true;
   } catch (error) {
     console.error(`Erro ao salvar tarefa ${task.id} para o usuário ${userId}:`, error);
@@ -131,9 +134,12 @@ export const setTaskCompletion = (
     task.isCompleted = isCompleted;
     if (isCompleted) {
       task.subtasks.forEach(sub => {
-        sub.isCompleted = true;
+        sub.isCompleted = true; // Marcar todas as subtarefas como completas
       });
     }
+    // Se !isCompleted, as subtarefas mantêm seu estado individual,
+    // mas a tarefa principal não está completa.
+    // task.needsSync = true; // saveTask cuidará disso
     return saveTask(task, userId);
   }
   return false;
@@ -149,6 +155,8 @@ export const deleteTask = (taskId: string, userId: string): boolean => {
   const task = getTaskById(taskId, userId);
   if (task) {
     task.isDeleted = true;
+    // task.needsSync = true; // saveTask cuidará disso
+    console.log(`Tarefa ${taskId} (userId: ${userId}) marcada para exclusão e sincronização.`);
     return saveTask(task, userId);
   }
   return false;
@@ -167,11 +175,12 @@ export const addSubtask = (taskId: string, subtaskText: string, userId: string):
   const task = getTaskById(taskId, userId);
   if (task && subtaskText.trim()) {
     const newSubtask: Subtask = {
-      id: generateUniqueId(),
+      id: generateUniqueId(), // ID local para a subtarefa
       text: subtaskText.trim(),
       isCompleted: false,
     };
     task.subtasks.push(newSubtask);
+    // task.needsSync = true; // saveTask cuidará disso
     return saveTask(task, userId);
   }
   return false;
@@ -196,6 +205,7 @@ export const updateSubtaskText = (
     const subtaskIndex = task.subtasks.findIndex(sub => sub.id === subtaskId);
     if (subtaskIndex !== -1) {
       task.subtasks[subtaskIndex].text = newText.trim();
+      // task.needsSync = true; // saveTask cuidará disso
       return saveTask(task, userId);
     }
   }
@@ -222,13 +232,16 @@ export const setSubtaskCompletion = (
     if (subtaskIndex !== -1) {
       task.subtasks[subtaskIndex].isCompleted = isCompleted;
       if (!isCompleted) {
+        // Se uma subtarefa é desmarcada, a tarefa pai também não está completa
         task.isCompleted = false;
       } else {
+        // Se uma subtarefa é marcada, verificar se todas as outras estão completas
         const allSubtasksCompleted = task.subtasks.every(sub => sub.isCompleted);
         if (allSubtasksCompleted) {
           task.isCompleted = true;
         }
       }
+      // task.needsSync = true; // saveTask cuidará disso
       return saveTask(task, userId);
     }
   }
@@ -248,8 +261,40 @@ export const deleteSubtask = (taskId: string, subtaskId: string, userId: string)
     const initialLength = task.subtasks.length;
     task.subtasks = task.subtasks.filter(sub => sub.id !== subtaskId);
     if (task.subtasks.length < initialLength) {
+      // task.needsSync = true; // saveTask cuidará disso
       return saveTask(task, userId);
     }
   }
   return false;
+};
+
+/**
+ * Remove uma tarefa do armazenamento local. Usado após sincronização bem-sucedida com a API.
+ * @param taskId O ID da tarefa a ser removida.
+ * @param userId O ID do usuário proprietário da tarefa.
+ * @returns true se a operação foi bem-sucedida, false caso contrário.
+ */
+export const markTaskAsSyncedAndRemove = (taskId: string, userId: string): boolean => {
+  if (!userId || !taskId) {
+    console.error('Erro ao remover tarefa sincronizada: ID do usuário ou da tarefa não fornecido.');
+    return false;
+  }
+  try {
+    const taskKey = getUserTaskKey(userId, taskId);
+    if (storage.contains(taskKey)) {
+      storage.delete(taskKey);
+      console.log(`Tarefa local ${taskId} (userId: ${userId}) removida após sincronização.`);
+      return true;
+    }
+    console.warn(
+      `Tarefa local ${taskId} (userId: ${userId}) não encontrada para remoção pós-sincronização.`,
+    );
+    return false;
+  } catch (error) {
+    console.error(
+      `Erro ao remover tarefa local ${taskId} (userId: ${userId}) após sincronização:`,
+      error,
+    );
+    return false;
+  }
 };
