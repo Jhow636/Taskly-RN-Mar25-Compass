@@ -89,7 +89,15 @@ const HomeScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  const prepareTaskPayloadForApi = (task: TaskModel) => {
+  const prepareTaskPayloadForApi = (
+    task: TaskModel,
+    isShellForStatusUpdateOnly: boolean = false,
+  ) => {
+    if (isShellForStatusUpdateOnly) {
+      return {
+        done: task.isCompleted,
+      };
+    }
     return {
       title: task.title,
       description: task.description,
@@ -121,7 +129,10 @@ const HomeScreen = () => {
       let localSyncOperations = 0;
 
       for (const localTask of localTasksToSync) {
+        const isShellForStatusUpdate = localTask.createdAt === new Date(0).toISOString();
         try {
+          const payload = prepareTaskPayloadForApi(localTask, isShellForStatusUpdate);
+
           if (localTask.isDeleted) {
             console.log(`Sync: Deleting task ${localTask.id} from API.`);
             await deleteApiTask(localTask.id);
@@ -129,15 +140,16 @@ const HomeScreen = () => {
             localSyncOperations++;
           } else {
             const isLikelyNewTask = localTask.id.includes('-');
-            const payload = prepareTaskPayloadForApi(localTask);
 
-            if (isLikelyNewTask) {
-              console.log(`Sync: Creating new task "${localTask.title}" on API.`);
+            if (isLikelyNewTask && !isShellForStatusUpdate) {
+              console.log(`Sync: Creating new task "${localTask.title}" on API with full payload.`);
               await createApiTask(payload);
               markTaskAsSyncedAndRemove(localTask.id, userId);
               localSyncOperations++;
             } else {
-              console.log(`Sync: Updating task ${localTask.id} on API.`);
+              console.log(
+                `Sync: Updating task ${localTask.id} (Title: "${localTask.title}") on API. Is shell for status update: ${isShellForStatusUpdate}`,
+              );
               await updateApiTask(localTask.id, payload);
               markTaskAsSyncedAndRemove(localTask.id, userId);
               localSyncOperations++;
@@ -149,19 +161,26 @@ const HomeScreen = () => {
             error,
           );
           if (error instanceof CustomApiError && error.status === 404 && !localTask.isDeleted) {
-            try {
-              console.log(
-                `Sync: Update failed (404), attempting to CREATE task ${localTask.title} as fallback.`,
+            if (isShellForStatusUpdate) {
+              console.warn(
+                `Sync: Shell task ${localTask.id} not found on server (404). Removing local shell.`,
               );
-              const createPayload = prepareTaskPayloadForApi(localTask);
-              await createApiTask(createPayload);
               markTaskAsSyncedAndRemove(localTask.id, userId);
-              localSyncOperations++;
-            } catch (createError) {
-              console.error(
-                `Sync: Fallback CREATE failed for task ${localTask.title}:`,
-                createError,
-              );
+            } else {
+              try {
+                console.log(
+                  `Sync: Update failed (404 for non-shell), attempting to CREATE task ${localTask.title} as fallback.`,
+                );
+                const createPayload = prepareTaskPayloadForApi(localTask, false);
+                await createApiTask(createPayload);
+                markTaskAsSyncedAndRemove(localTask.id, userId);
+                localSyncOperations++;
+              } catch (createError) {
+                console.error(
+                  `Sync: Fallback CREATE failed for task ${localTask.title}:`,
+                  createError,
+                );
+              }
             }
           }
         }
@@ -251,13 +270,18 @@ const HomeScreen = () => {
     const taskIndex = tasks.findIndex(t => t.id === taskId);
     if (taskIndex > -1) {
       const updatedTasks = [...tasks];
-      const taskToToggle = updatedTasks[taskIndex];
+      const taskToToggle = {...updatedTasks[taskIndex]};
       taskToToggle.isCompleted = !taskToToggle.isCompleted;
       if (taskToToggle.isCompleted) {
         taskToToggle.subtasks.forEach(sub => (sub.isCompleted = true));
       }
+      updatedTasks[taskIndex] = taskToToggle;
       setTasks(updatedTasks);
       setLocalTaskCompletion(taskId, taskToToggle.isCompleted, userId);
+      const localUpdateSuccess = setLocalTaskCompletion(taskId, taskToToggle.isCompleted, userId);
+      console.log(
+        `HomeScreen.handleToggleComplete: setLocalTaskCompletion para ${taskId} retornou: ${localUpdateSuccess}`,
+      );
       syncLocalTasksWithApi(true);
     }
   };
