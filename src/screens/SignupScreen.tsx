@@ -17,29 +17,33 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import BackButton from '../components/BackButton';
 import useForm from '../hooks/useForm';
-import {UserData} from '../utils/storage';
 
 import BiometricsModal from '../components/BiometricsModal';
 import {activateBiometrics} from '../services/biometrics';
+
+export interface UserSignupData {
+  fullName: string;
+  email: string;
+  phone: string;
+}
 
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
   AvatarSelection: {
-    userData: Omit<UserData, 'avatarId' | 'id'>;
+    userData: UserSignupData;
     password: string;
   };
 };
 
 const SignupScreen: React.FC = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Signup'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Signup'>>();
   const passwordRef = useRef<string>('');
 
   const [showBiometricModal, setShowBiometricModal] = useState(false);
   const [biometryType, setBiometryType] = useState<string | null>(null);
   const [pendingUserData, setPendingUserData] = useState<{
-    userData: Omit<UserData, 'avatarId' | 'id'>;
+    userData: UserSignupData;
     password: string;
   } | null>(null);
 
@@ -57,8 +61,7 @@ const SignupScreen: React.FC = () => {
   const validateFullName = (name: string): string | null => {
     if (!name) return 'Nome é obrigatório';
     const nameParts = name.trim().split(/\s+/);
-    if (nameParts.length < 2)
-      return 'Nome deve ser composto (mínimo dois nomes)';
+    if (nameParts.length < 2) return 'Nome deve ser composto (mínimo dois nomes)';
     if (name.length > 120) return 'Nome deve ter no máximo 120 caracteres';
     return null;
   };
@@ -93,10 +96,7 @@ const SignupScreen: React.FC = () => {
     return null;
   };
 
-  const validatePasswordConfirmation = (
-    password: string,
-    confirmation: string,
-  ): string | null => {
+  const validatePasswordConfirmation = (password: string, confirmation: string): string | null => {
     if (!confirmation) return 'Confirmação de senha é obrigatória';
     if (password !== confirmation) return 'As senhas devem ser iguais';
     return null;
@@ -111,14 +111,9 @@ const SignupScreen: React.FC = () => {
     } else if (numbers.length <= 7) {
       return `(${numbers.slice(0, 2)}) 9 ${numbers.slice(3)}`;
     } else if (numbers.length <= 11) {
-      return `(${numbers.slice(0, 2)}) 9 ${numbers.slice(3, 7)}-${numbers.slice(
-        7,
-      )}`;
+      return `(${numbers.slice(0, 2)}) 9 ${numbers.slice(3, 7)}-${numbers.slice(7)}`;
     } else {
-      return `(${numbers.slice(0, 2)}) 9 ${numbers.slice(3, 7)}-${numbers.slice(
-        7,
-        11,
-      )}`;
+      return `(${numbers.slice(0, 2)}) 9 ${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
     }
   };
 
@@ -138,8 +133,10 @@ const SignupScreen: React.FC = () => {
     [],
   );
 
-  const {formState, handleChange, handleBlur, validateAllFields, getValues} =
-    useForm(initialValues, validations);
+  const {formState, handleChange, handleBlur, validateAllFields, getValues} = useForm(
+    initialValues,
+    validations,
+  );
 
   const handlePhoneChange = (value: string) => {
     const formattedPhone = formatPhoneNumber(value);
@@ -150,14 +147,13 @@ const SignupScreen: React.FC = () => {
     if (!validateAllFields()) return;
 
     const values = getValues();
-    const userData = {
+    const userData: UserSignupData = {
       fullName: values.fullName,
       email: values.email,
       phone: values.phone,
     };
     const password = values.password;
 
-    // 🔐 FORÇA a exibição do modal no emulador
     setBiometryType('Impressão Digital');
     setPendingUserData({userData, password});
     setShowBiometricModal(true);
