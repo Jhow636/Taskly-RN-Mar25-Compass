@@ -14,6 +14,7 @@ import CircularIconButton from '../components/CircularIconButton';
 import {useAuth} from '../context/AuthContext';
 import SignupScreen from '../screens/SignupScreen';
 import AvatarSelectionScreen from '../screens/AvatarSelectionScreen';
+import EditTaskScreen from '../screens/tasks/EditTaskScreen';
 import PreferencesScreen from '../screens/preferences/PreferencesScreen';
 import {View, ActivityIndicator} from 'react-native';
 
@@ -77,6 +78,7 @@ function HomeStackNavigator() {
       }}>
       <MainStack.Screen name="Home" component={HomeScreen} />
       <MainStack.Screen name="TaskDetails" component={TaskDetailScreen} />
+      <MainStack.Screen name ="EditTask" component={EditTaskScreen} />
       <MainStack.Screen name="Preferences" component={PreferencesScreen} />
     </MainStack.Navigator>
   );

@@ -62,7 +62,7 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
         {/* Prioridade */}
         <Text style={styles.label}>Prioridade</Text>
         <View style={[styles.priorityBadge, styles[`priority${task.priority}`]]}>
-          <Text style={styles.priorityText}>{task.priority}</Text>
+          <Text style={[styles.priorityText]}>{task.priority}</Text>
         </View>
 
         {/* Botão Resolver/Desmarcar */}
