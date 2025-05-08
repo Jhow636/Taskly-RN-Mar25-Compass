@@ -20,7 +20,7 @@ import {View, ActivityIndicator} from 'react-native';
 import Terms from '../screens/Terms';
 import Menu from '../screens/Menu';
 import Preferencies from '../screens/Preferencies/Index';
-import AvatarUpdate from '../screens/AvatarUpdate';
+// import AvatarUpdate from '../screens/AvatarUpdate';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
