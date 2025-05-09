@@ -316,13 +316,6 @@ export const updateTask = async (taskId: string, taskData: any): Promise<void> =
   await apiClient.put(`/tasks/${taskId}`, taskData);
 };
 
-// PUT /tasks/:id/share
-export const shareTask = async (taskId: string, sharedWith: string[]): Promise<any> => {
-  // Verifique o tipo de resposta
-  const response = await apiClient.put(`/tasks/${taskId}/share`, {sharedWith});
-  return response.data;
-};
-
 // GET /users/search
 export const searchUsers = async (query: string): Promise<any[]> => {
   // Defina uma interface para o usuário da busca
