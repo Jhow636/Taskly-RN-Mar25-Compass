@@ -1,24 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import BackMenu from '../../components/BackButtom';
 import MenuOption from '../../components/menuOption';
-import { useNavigation } from '@react-navigation/native';
 import { Theme } from '../../theme/Theme';
 import { useTheme } from '../../theme/ThemeContext';
+import PreferencesScreen from '../preferences/PreferencesScreen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Preferencies = () => {
-    const navigation = useNavigation();
+    const [modalVisible, setModalVisible] = useState(false);
     const {theme} = useTheme();
     const styles = getStyles(theme);
 
-
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <BackMenu text="Preferências" />
             <View style={styles.btns}>
-                <MenuOption title="Habilitar Tema Claro" action={ ()=>{navigation.navigate('DarkMode')}} />
+                <MenuOption title= {theme.statusBarStyle !== 'dark'? "Habilitar Tema Claro": "Habilitar Tema Escuro"} 
+                 action={() => { setModalVisible(true); }}
+                 />
             </View>
-        </View>
+
+        <PreferencesScreen modalVisible={modalVisible} setModalVisible={setModalVisible} />
+
+
+        </SafeAreaView>
     );
 };
 
