@@ -3,6 +3,7 @@ import {View, Text, Pressable, FlatList, TouchableOpacity, Image} from 'react-na
 import {Swipeable} from 'react-native-gesture-handler';
 import {Task} from '../../data/models/Task';
 import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
+import Icon from '@react-native-vector-icons/feather';
 
 interface TaskDetailCardProps {
   task: Task;
@@ -17,7 +18,7 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
   // Função para renderizar ação de swipe para deletar a tarefa principal
   const renderTaskDeleteAction = () => (
     <TouchableOpacity style={styles.deleteAction} onPress={onDelete}>
-      <Image source={require('../../assets/img/delete-icon.png')} style={styles.icon} />
+      <Icon name="trash" size={30} color={styles.icon.tintColor} />
     </TouchableOpacity>
   );
 
@@ -27,8 +28,8 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
         {/* Cabeçalho do Card */}
         <View style={styles.cardHeader}>
           <Text style={styles.sectionTitle}>Titulo</Text>
-          <TouchableOpacity onPress={onEdit} style={styles.editIcon}>
-            <Image source={require('../../assets/img/edit-icon.png')} style={styles.icon} />
+          <TouchableOpacity onPress={onEdit}>
+            <Image source={require('../../assets/img/editIcon.png')} style={styles.editIcon} />
           </TouchableOpacity>
         </View>
 
