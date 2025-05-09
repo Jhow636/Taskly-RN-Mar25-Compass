@@ -7,6 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Theme } from '../../theme/Theme';
 import { useAuth } from '../../context/AuthContext';
+import Icon from '@react-native-vector-icons/feather';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 
 const mensage = {
@@ -15,15 +17,6 @@ const mensage = {
     logOut:'Sair da conta',
     accountExclude:'Excluir Conta',
 };
-const icons = {
-    user: require('../../assets/menu/perfilIcon.png'),
-    biometric: require('../../assets/menu/biometric.png'),
-    logOut: require('../../assets/menu/out.png'),
-    exclude: require('../../assets/menu/trash.png'),
-};
-
-
-
 const Menu: React.FC = () => {
     const navigation = useNavigation();
     const { theme } = useTheme();
@@ -37,7 +30,7 @@ const Menu: React.FC = () => {
         {
           id: '1',
           title: mensage.userEdit,
-          icon: icons.user,
+          icon:  <Icon name="upload-cloud"  size={25} color={theme.colors.mainText}  />,
           modalTextconten :'Tem certeza que deseja editar as informações do perfil.',
           acceptText:'EDITAR',
           modalTitle:'Deseja editar o perfil',
@@ -46,7 +39,7 @@ const Menu: React.FC = () => {
         {
           id: '2',
           title: mensage.biometric,
-          icon: icons.biometric,
+          icon:  <FontAwesome5 name="fingerprint" size={25} color={theme.colors.mainText} />,
           modalTextconten:'Tem certeza que deseja desabilitar a autenticação por biometria? Você precisará usar seu login e senha para acessar o app.',
           acceptText: isbiomtric ? 'DESABILITAR' : 'HABILITAR',
           modalTitle:'Desabilitar biometria',
@@ -57,7 +50,7 @@ const Menu: React.FC = () => {
         {
           id: '3',
           title: mensage.logOut,
-          icon: icons.logOut,
+          icon: <Icon name="log-out" size={25} color={theme.colors.mainText}/>,
           modalTextconten :'Tem certeza que deseja sair do aplicativo? Você poderá se conectar novamente a qualquer momento.',
           acceptText:'SAIR',
           modalTitle:'Deseja Sair',
@@ -66,7 +59,7 @@ const Menu: React.FC = () => {
         {
           id: '4',
           title: mensage.accountExclude,
-          icon: icons.exclude,
+          icon: <Icon name="trash" size={25} color={theme.colors.mainText} />,
           modalTextconten:'Tem certeza que deseja excluir sua conta? Essa ação é permanente e todos os seus dados serão perdidos.',
           acceptText:'EXCLUIR',
           modalTitle:'Excluir conta',
@@ -92,6 +85,7 @@ const Menu: React.FC = () => {
           < MenuOption  title='Preferências' action={ ()=>{navigation.navigate('Preferencies' as never)}} />
           < MenuOption  title='Termos e regulamentos' action={ ()=>{navigation.navigate('Terms' as never)}} />
         </View>
+    
       </SafeAreaView>
 
 
