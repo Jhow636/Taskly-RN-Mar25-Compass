@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, StyleSheet, Image, View } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Theme } from '../../theme/Theme';
 import { useNavigation } from '@react-navigation/native';
@@ -19,7 +19,7 @@ const BackMenu = ({ text }: BackProps) => {
                 style={styles.container}
                 onPress={() => navigation.goBack()}
             >
-               <Icon name="chevron-left" size={25} color={theme.colors.mainText} />
+               <Icon name="chevron-left" size={25} color={theme.colors.background} />
 
                 <Text
                     onPress={() => navigation.goBack()}
@@ -60,7 +60,7 @@ const getStyles = (theme: Theme) =>
         },
         content: {
             ...theme.typography.subtitle,
-            color:theme.colors.mainText,
+            color:theme.colors.background,
         },
         icon: {
             width: 9.75,
