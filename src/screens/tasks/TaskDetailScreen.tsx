@@ -1,8 +1,10 @@
 import React, {useState, useCallback} from 'react';
-import {View, ScrollView, ActivityIndicator, Alert, Text} from 'react-native';
+import {View, ScrollView, ActivityIndicator, Alert, Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation, useFocusEffect} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faPlusSquare, faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 
 import {MainStackParamList} from '../../navigation/types';
 import {Task as TaskModel, Subtask} from '../../data/models/Task';
@@ -14,6 +16,7 @@ import {
   setSubtaskCompletion,
   deleteSubtask,
   getTaskById as getLocalTaskById,
+  updateSubtaskText as updateLocalSubtaskText,
 } from '../../storage/taskStorage';
 import {useTheme} from '../../theme/ThemeContext';
 import {useTaskDetailStyles} from './TaskDetailStyles';
@@ -144,15 +147,16 @@ const TaskDetailScreen = () => {
     );
   };
 
-  const handleAddSubtaskToList = (text: string) => {
-    if (!task || !userId || !text.trim()) {
+  const handleAddSubtaskConfirmedFromSection = (subtaskText: string) => {
+    if (!task || !userId) {
+      Alert.alert('Erro', 'Não foi possível adicionar a subtarefa. Dados da tarefa ausentes.');
       return;
     }
-    const success = addSubtask(task.id, text.trim(), userId);
+    const success = addSubtask(task.id, subtaskText, userId);
     if (success) {
       reloadTaskFromLocal();
-      console.log(`TaskDetailScreen: Subtask added to ${task.id}. Triggering sync.`);
       triggerSync();
+      console.log(`TaskDetailScreen: Subtask "${subtaskText}" added to ${task.id}.`);
     } else {
       Alert.alert('Erro', 'Não foi possível adicionar a subtarefa localmente.');
     }
@@ -205,6 +209,23 @@ const TaskDetailScreen = () => {
     ]);
   };
 
+  const handleUpdateSubtaskText = (subtaskId: string, newText: string) => {
+    if (!task || !userId) {
+      Alert.alert('Erro', 'Não foi possível atualizar a subtarefa. Dados ausentes.');
+      return;
+    }
+    const success = updateLocalSubtaskText(task.id, subtaskId, newText, userId);
+    if (success) {
+      reloadTaskFromLocal();
+      console.log(
+        `TaskDetailScreen: Subtask ${subtaskId} in task ${task.id} text updated to "${newText}". Triggering sync.`,
+      );
+      triggerSync();
+    } else {
+      Alert.alert('Erro', 'Não foi possível atualizar o texto da subtarefa localmente.');
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
@@ -241,11 +262,13 @@ const TaskDetailScreen = () => {
           onToggleComplete={handleToggleTaskComplete}
           onDelete={handleDeleteTask}
         />
+
         <SubtaskListSection
           subtasks={task.subtasks}
-          onAddSubtask={handleAddSubtaskToList}
           onToggleSubtask={handleToggleSingleSubtaskComplete}
           onDeleteSubtask={handleDeleteSingleSubtask}
+          onAddSubtaskConfirmed={handleAddSubtaskConfirmedFromSection}
+          onUpdateSubtaskText={handleUpdateSubtaskText}
         />
       </ScrollView>
     </GestureHandlerRootView>

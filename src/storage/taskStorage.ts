@@ -309,12 +309,25 @@ export const updateSubtaskText = (
 ): boolean => {
   const task = getTaskById(taskId, userId);
   if (task && newText.trim()) {
+    // Verifica se newText não é apenas espaços em branco
     const subtaskIndex = task.subtasks.findIndex(sub => sub.id === subtaskId);
     if (subtaskIndex !== -1) {
       task.subtasks[subtaskIndex].text = newText.trim();
       // task.needsSync = true; // saveTask cuidará disso
+      console.log(
+        `taskStorage.updateSubtaskText: Atualizando texto da subtarefa ${subtaskId} para "${newText.trim()}" na tarefa ${taskId}`,
+      );
       return saveTask(task, userId);
+    } else {
+      console.warn(
+        `taskStorage.updateSubtaskText: Subtarefa ${subtaskId} não encontrada na tarefa ${taskId}`,
+      );
     }
+  } else if (task && !newText.trim()) {
+    console.warn(
+      `taskStorage.updateSubtaskText: Novo texto para subtarefa ${subtaskId} está vazio. Nenhuma alteração feita.`,
+    );
+    return false; // Não permite salvar texto vazio
   }
   return false;
 };
