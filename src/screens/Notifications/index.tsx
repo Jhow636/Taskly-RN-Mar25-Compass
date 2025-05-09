@@ -1,25 +1,41 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet ,Image} from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
+import { Theme } from '../../theme/Theme';
 
 const Notifications: React.FC = () => {
+    const { theme } = useTheme();
+    const styles = getStyles(theme);
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Tela de notificação!</Text>
+            <Text style={styles.text}>Estamos ajustando os ponteiros para que você nunca mais perca a hora!</Text>
+            <Text style={styles.subtext}>Em breve retorne aqui</Text>
+            <Image  style={styles.image} source={require('../../assets/notivication.png')}/>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme:Theme)=> StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        padding:30,
+        backgroundColor: theme.colors.background,
     },
     text: {
-        fontSize: 18,
-        color: '#333',
+        ...theme.typography.bigTitle ,
+        color:theme.colors.mainText,
     },
+    image:{
+        height:200,
+        width:200,
+        textAlign:'center',
+    },
+    subtext:{
+        color:theme.colors.mainText,
+    },
+
 });
 
 export default Notifications;
