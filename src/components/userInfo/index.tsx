@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { Theme } from '../../theme/Theme';
 import { useTheme } from '../../theme/ThemeContext';
 import { getRememberedEmail } from '../../storage/userStorage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface UserInfo {
   name: string;
@@ -23,14 +24,14 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ userData }) => {
   const styles = getStyles(theme);
 
   if (!userData) {
-    return null; // Ou outra renderização condicional caso userData seja nulo
+    return null;
   }
 
 
 
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {userData.picture && (
         <Image source={{ uri: userData.picture }} style={styles.profileImage} />
       )}
@@ -38,7 +39,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ userData }) => {
       <Text style={styles.name}>Rafaela Santos</Text>
       <Text style={styles.email}>{getRememberedEmail()}</Text>
       <Text style={styles.phone}>(23) 93232 - 3232</Text>
-    </View>
+    </SafeAreaView>
   );
 };
 
