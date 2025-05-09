@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import { Theme } from '../../theme/Theme';
 
-const PreferencesScreen = () => {
+
+
+type PreferencesScreenProps ={
+  modalVisible: boolean;
+  setModalVisible: (visible: boolean) => void;
+};
+
+const PreferencesScreen = ({modalVisible, setModalVisible}: PreferencesScreenProps) => {
   const { theme, setAppTheme } = useTheme();
-  const [modalVisible, setModalVisible] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | null>(null);
+  const styles = getStyles(theme);
 
   const handleConfirm = () => {
     if (selectedTheme) {
@@ -15,17 +23,6 @@ const PreferencesScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.title, { color: theme.colors.mainText }]}>Preferências</Text>
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        style={[styles.button, { backgroundColor: theme.colors.primary }]}
-      >
-        <Text style={[styles.buttonText, { color: theme.colors.secondaryBg }]}>
-          Alterar Tema
-        </Text>
-      </TouchableOpacity>
-
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -33,7 +30,7 @@ const PreferencesScreen = () => {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: theme.colors.secondaryBg }]}>
+          <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
             <Text style={[styles.modalTitle, { color: theme.colors.mainText }]}>
               Escolha o tema
             </Text>
@@ -76,25 +73,15 @@ const PreferencesScreen = () => {
           </View>
         </View>
       </Modal>
-    </View>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  button: {
-    padding: 12,
-    borderRadius: 8,
   },
   buttonText: {
     fontSize: 18,
@@ -109,7 +96,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '90%',
     maxWidth: 400,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
     alignItems: 'center',
   },
@@ -117,6 +104,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
+    textDecorationLine:'underline',
+    alignSelf:'flex-start',
   },
   themeOptions: {
     flexDirection: 'row',
@@ -125,41 +114,50 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   themeOption: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
+    width: 134.5,
+    height: 134.5,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+    backgroundColor:theme.colors.secondaryBg,
   },
   selectedOption: {
     borderColor: '#6200ea',
   },
   icon: {
-    width: 50,
-    height: 50,
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     width: '100%',
   },
   cancelButton: {
-    padding: 10,
-    borderRadius: 5,
+    borderRadius: 8,
+    borderWidth:2,
+    borderColor:theme.colors.primary,
+    width:134.5,
+    height:37,
+    justifyContent:'center',
+    alignItems:'center',
   },
   cancelText: {
-    fontSize: 16,
+    ...theme.typography.regular,
   },
   confirmButton: {
-    padding: 10,
     borderRadius: 5,
+    width:134.5,
+    height:37,
+    justifyContent:'center',
+    alignItems:'center',
   },
   confirmText: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    ...theme.typography.regular,
+    color: theme.colors.background,
     fontWeight: 'bold',
   },
 });
