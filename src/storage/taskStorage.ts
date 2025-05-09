@@ -58,6 +58,8 @@ export const saveTask = (task: Task, userId: string): boolean => {
 
 /**
  * Busca uma tarefa no MMKV pelo seu ID para um usuário específico.
+ * Esta função DEVE continuar retornando null se a tarefa estiver marcada como isDeleted,
+ * pois é usada para carregar uma tarefa individual para visualização/edição.
  * @param taskId O ID da tarefa a ser buscada.
  * @param userId O ID do usuário proprietário da tarefa.
  * @returns O objeto Task se encontrado, ou null caso contrário.
@@ -76,13 +78,44 @@ export const getTaskById = (taskId: string, userId: string): Task | null => {
 
     if (taskJson) {
       const task: Task = JSON.parse(taskJson);
-      return task.isDeleted ? null : task;
+      // Se a tarefa está marcada como deletada, não a retorne como uma tarefa "ativa"
+      if (task.isDeleted) {
+        console.log(
+          `taskStorage.getTaskById: Tarefa ${taskId} encontrada, mas está marcada como isDeleted. Retornando null.`,
+        );
+        return null;
+      }
+      return task;
     } else {
       return null;
     }
   } catch (error) {
     console.error(`Erro ao buscar tarefa ${taskId} para o usuário ${userId}:`, error);
     return null;
+  }
+};
+
+/**
+ * Salva ou atualiza uma tarefa vinda da API no MMKV, garantindo que needsSync seja false.
+ * @param task A tarefa da API.
+ * @param userId O ID do usuário.
+ * @returns true se sucesso, false caso contrário.
+ */
+export const saveTaskFromApi = (task: Task, userId: string): boolean => {
+  if (!userId || !task || !task.id) {
+    console.error('saveTaskFromApi: Dados inválidos.');
+    return false;
+  }
+  try {
+    const taskKey = getUserTaskKey(userId, task.id);
+    // Assegurar que a tarefa da API não seja marcada para nova sincronização
+    const taskToSave = {...task, needsSync: false, isDeleted: false};
+    const taskJson = JSON.stringify(taskToSave);
+    storage.set(taskKey, taskJson);
+    return true;
+  } catch (error) {
+    console.error(`Erro ao salvar tarefa ${task.id} da API para usuário ${userId}:`, error);
+    return false;
   }
 };
 
@@ -107,16 +140,16 @@ export const getAllTasks = (userId: string): Task[] => {
       if (taskJson) {
         try {
           const task: Task = JSON.parse(taskJson);
-          if (!task.isDeleted) {
-            tasks.push(task);
-          }
+          tasks.push(task);
         } catch (parseError) {
           console.error(`Erro ao parsear dados da tarefa para a chave ${key}:`, parseError);
         }
       }
     });
     tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    console.log(`Encontradas ${tasks.length} tarefas para o usuário ${userId}.`);
+    console.log(
+      `taskStorage.getAllTasks: Encontradas ${tasks.length} tarefas (incluindo marcadas para deleção) para o usuário ${userId}.`,
+    );
     return tasks;
   } catch (error) {
     console.error(`Erro ao buscar todas as tarefas para o usuário ${userId}:`, error);
