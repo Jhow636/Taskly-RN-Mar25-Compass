@@ -2,6 +2,7 @@ import { Text, TouchableOpacity, StyleSheet, Image, View } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Theme } from '../../theme/Theme';
 import { useNavigation } from '@react-navigation/native';
+import Icon from '@react-native-vector-icons/feather';
 
 type BackProps = {
     text?: string;
@@ -18,10 +19,8 @@ const BackMenu = ({ text }: BackProps) => {
                 style={styles.container}
                 onPress={() => navigation.goBack()}
             >
-                <Image
-                    style={styles.icon}
-                    source={require('../../assets/imgs/backImage.png')}
-                />
+               <Icon name="chevron-left" size={25} color={theme.colors.mainText} />
+
                 <Text
                     onPress={() => navigation.goBack()}
                     style={styles.content}

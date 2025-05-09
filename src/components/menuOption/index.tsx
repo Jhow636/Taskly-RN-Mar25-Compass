@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Theme } from '../../theme/Theme';
+import Icon from '@react-native-vector-icons/feather';
 
 type MenuOptionProps = {
     title: string;
@@ -15,10 +16,7 @@ const MenuOption = ({ title, action }: MenuOptionProps) => {
     return (
         <TouchableOpacity style={styles.container} onPress={action}>
             <Text style={styles.text}>{title}</Text>
-            <Image
-                source={require('../../assets/imgs/menuArrow.png')}
-                style={styles.icon}
-            />
+            <Icon name="chevron-right" size={25} color={theme.colors.mainText} />
         </TouchableOpacity>
     );
 };
