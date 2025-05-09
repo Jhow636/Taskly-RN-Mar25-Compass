@@ -18,18 +18,15 @@ export const useHeaderInternStyles = () => {
         backButton: {
           backgroundColor: theme.colors.secondaryText,
           borderRadius: 12,
-          height: 48,
-          width: 48,
+          padding: 12,
           justifyContent: 'center',
           alignItems: 'center',
-        },
-        icon: {
-          height: 17,
-          width: 8,
+          color: theme.colors.mainText,
         },
         titleText: {
           ...theme.typography.bigTitle,
           textAlign: 'center',
+          color: theme.colors.mainText,
         },
         profileImage: {
           width: 50,

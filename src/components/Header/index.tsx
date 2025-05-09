@@ -1,8 +1,9 @@
 import React from 'react';
 import {View, Text, Image} from 'react-native';
-import {styles} from './Header.style';
+import {useHeaderInternStyles} from './Header.style';
 
 const Header: React.FC = () => {
+  const styles = useHeaderInternStyles();
   return (
     <View style={styles.container}>
       <Text style={styles.titleText}>TASKLY</Text>
