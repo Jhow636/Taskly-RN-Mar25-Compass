@@ -5,11 +5,12 @@ import { Theme } from '../../theme/Theme';
 import { useState } from 'react';
 import ConfirmMenuModal from '../confirmMenuModal';
 
+
 type CarouselItemProps ={
     id:string,
     title:string,
     icon: any,
-    modalTextconten: string,
+    modalTextconten: React.ReactNode,
     acceptText: string
     modalTitle:string
     action: ()=>any,
@@ -47,7 +48,7 @@ const CarouselItem = ({
 
 
                 <Text style={styles.content}>{title}</Text>
-                <Image source={icon}  style={[styles.icon]}/>
+                {icon}
             </TouchableOpacity>
 
     );
