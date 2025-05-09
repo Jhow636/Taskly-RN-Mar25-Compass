@@ -2,23 +2,50 @@
 import { Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Theme } from '../../theme/Theme';
+import { useState } from 'react';
+import ConfirmMenuModal from '../confirmMenuModal';
 
 type CarouselItemProps ={
     id:string,
     title:string,
     icon: any,
+    modalTextconten: string,
+    acceptText: string
+    modalTitle:string
+    action: ()=>any,
 };
 
 const CarouselItem = ({
     title,
     icon,
+    modalTextconten,
+    acceptText,
+    modalTitle,
+    action,
 }: CarouselItemProps) => {
     const { theme } = useTheme();
     const styles = getStyle(theme);
+    const [modal, setModal] = useState(false);
+
     return (
             <TouchableOpacity 
                 style={styles.container}
-            >
+                onPress={
+                   ()=> setModal(!modal)
+                }
+                >
+                <ConfirmMenuModal
+                action={action}
+                isVisible={modal}
+                onClose={() => setModal(false)}
+                modalText={modalTextconten}
+                confirmButtonText={acceptText}
+                title={modalTitle}
+                onConfirm={action}
+                />
+
+
+
                 <Text style={styles.content}>{title}</Text>
                 <Image source={icon}  style={[styles.icon]}/>
             </TouchableOpacity>

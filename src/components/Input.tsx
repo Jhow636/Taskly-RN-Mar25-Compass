@@ -6,8 +6,12 @@ import {
   StyleSheet,
   KeyboardTypeOptions,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
+import { Theme } from '../theme/Theme';
+
 
 interface InputProps {
+  enable?:boolean,
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -20,6 +24,7 @@ interface InputProps {
 }
 
 const Input: React.FC<InputProps> = ({
+  enable,
   label,
   value,
   onChangeText,
@@ -30,10 +35,14 @@ const Input: React.FC<InputProps> = ({
   keyboardType = 'default',
   autoCapitalize = 'sentences',
 }) => {
+
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        editable={enable}
         style={[styles.input, error ? styles.inputError : null]}
         value={value}
         onChangeText={onChangeText}
@@ -41,6 +50,7 @@ const Input: React.FC<InputProps> = ({
         placeholder={placeholder}
         secureTextEntry={isPassword}
         keyboardType={keyboardType}
+        placeholderTextColor={theme.colors.mainText}
         autoCapitalize={autoCapitalize}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -48,7 +58,7 @@ const Input: React.FC<InputProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: Theme) =>StyleSheet.create({
   container: {
     marginBottom: 16,
     width: '100%',
@@ -56,23 +66,25 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     marginBottom: 6,
-    color: '#1D1D1D',
+    color:theme.colors.mainText,
   },
   input: {
     height: 48,
-    borderWidth: 1,
-    borderColor: '#5B3CC4',
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.secondaryBg,
     width: '100%',
+    color:theme.colors.mainText,
   },
   inputError: {
-    borderColor: '#FF1D1D',
+    color:theme.colors.mainText,
+    borderColor: theme.colors.error,
   },
   errorText: {
-    color: '#FF1D1D',
+    color:theme.colors.error,
     fontSize: 12,
     marginTop: 4,
   },

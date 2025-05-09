@@ -23,5 +23,6 @@ export type MainStackParamList = {
   Preferencies: undefined;
   DarkMode: undefined;
   AvatarUpdate: undefined;
+  UserEdit: undefined;
   // Adicione outras telas principais aqui
 };
