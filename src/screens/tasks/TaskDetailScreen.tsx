@@ -19,6 +19,7 @@ import {useTheme} from '../../theme/ThemeContext';
 import {useTaskDetailStyles} from './TaskDetailStyles';
 import TaskDetailCard from '../../components/tasks/TaskDetailCard';
 import SubtaskListSection from '../../components/tasks/SubtaskListSection';
+import HeaderIntern from '../../components/HeaderIntern/Index';
 
 type TaskDetailScreenRouteProp = RouteProp<MainStackParamList, 'TaskDetails'>;
 type TaskDetailScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'TaskDetails'>;
@@ -233,6 +234,7 @@ const TaskDetailScreen = () => {
   return (
     <GestureHandlerRootView style={styles.root}>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <HeaderIntern />
         <TaskDetailCard
           task={task}
           onEdit={handleEditTask}

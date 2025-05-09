@@ -26,22 +26,21 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
       <View style={styles.taskCard}>
         {/* Cabeçalho do Card */}
         <View style={styles.cardHeader}>
-          <Text style={styles.sectionTitle}>Detalhes da Tarefa</Text>
+          <Text style={styles.sectionTitle}>Titulo</Text>
           <TouchableOpacity onPress={onEdit} style={styles.editIcon}>
             <Image source={require('../../assets/img/edit-icon.png')} style={styles.icon} />
           </TouchableOpacity>
         </View>
 
         {/* Título */}
-        <Text style={styles.label}>Título</Text>
-        <Text style={styles.value}>{task.title}</Text>
+        <Text style={[styles.value, styles.title]}>{task.title}</Text>
 
         {/* Descrição */}
-        <Text style={styles.label}>Descrição</Text>
+        <Text style={styles.sectionTitle}>Descrição</Text>
         <Text style={styles.value}>{task.description}</Text>
 
         {/* Tags */}
-        <Text style={styles.label}>Tags</Text>
+        <Text style={styles.sectionTitle}>Tags</Text>
         {task.tags && task.tags.length > 0 ? (
           <FlatList
             horizontal
@@ -60,7 +59,7 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
         )}
 
         {/* Prioridade */}
-        <Text style={styles.label}>Prioridade</Text>
+        <Text style={styles.sectionTitle}>Prioridade</Text>
         <View style={[styles.priorityBadge, styles[`priority${task.priority}`]]}>
           <Text style={[styles.priorityText]}>{task.priority}</Text>
         </View>

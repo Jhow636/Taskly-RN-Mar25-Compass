@@ -19,7 +19,7 @@ export const useTaskDetailStyles = () => {
         case 'MÉDIA':
         default:
           return {
-            backgroundColor: theme.colors.secondaryAccent ,
+            backgroundColor: theme.colors.secondaryAccent,
           };
       }
     };
@@ -55,23 +55,25 @@ export const useTaskDetailStyles = () => {
         marginBottom: 24,
         shadowColor: '#000',
         shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 4,
       },
       cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
-        borderBottomWidth: 1,
         borderBottomColor: theme.colors.primaryLight,
-        paddingBottom: 10,
       },
       sectionTitle: {
+        ...theme.typography.mediumTitle,
+        color: theme.colors.secondaryText,
+      },
+      title: {
         ...theme.typography.subtitle,
         color: theme.colors.mainText,
-        fontWeight: 'bold',
+        marginBottom: 8,
+        marginTop: -4,
       },
       editIcon: {
         padding: 4,
@@ -81,12 +83,6 @@ export const useTaskDetailStyles = () => {
         height: 24,
         tintColor: theme.colors.mainText,
       },
-      label: {
-        ...theme.typography.caption,
-        color: theme.colors.secondaryText,
-        marginTop: 12,
-        marginBottom: 4,
-      },
       value: {
         ...theme.typography.regular,
         color: theme.colors.mainText,
@@ -94,6 +90,7 @@ export const useTaskDetailStyles = () => {
       },
       tagsList: {
         marginBottom: 8,
+        marginTop: 4,
       },
       tag: {
         backgroundColor: theme.colors.primaryLight,
@@ -104,9 +101,8 @@ export const useTaskDetailStyles = () => {
         alignSelf: 'flex-start',
       },
       tagText: {
-        ...theme.typography.caption,
-        color: theme.colors.primary,
-        fontWeight: '600',
+        ...theme.typography.regular,
+        color: theme.colors.mainText,
       },
       priorityBadge: {
         borderRadius: 6,
@@ -121,7 +117,7 @@ export const useTaskDetailStyles = () => {
       priorityText: {
         ...theme.typography.regular,
         textTransform: 'uppercase',
-        color: "#fff"
+        color: theme.colors.secondaryBg,
       },
       button: {
         paddingVertical: 4,
