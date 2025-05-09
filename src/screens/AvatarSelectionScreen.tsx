@@ -1,21 +1,28 @@
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  StatusBar,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useRoute, RouteProp} from '@react-navigation/native';
 
 import Button from '../components/Button';
-import {registerUser} from '../services/api';
+import {
+  registerUser,
+  loginUser,
+  CustomApiError,
+  updateFullProfile,
+  apiClient,
+} from '../services/api';
 import {AuthStackParamList} from '../navigation/types';
-
-type AvatarSelectionRouteProp = RouteProp<
-  AuthStackParamList, // Use AuthStackParamList
-  'AvatarSelection'
->;
-type AvatarSelectionNavigationProp = NativeStackNavigationProp<
-  AuthStackParamList, // Use AuthStackParamList
-  'AvatarSelection'
->;
+import {useAuth} from '../context/AuthContext';
+import {UserSignupData} from './SignupScreen';
 
 const avatars = [
   {id: 1, source: require('../assets/avatarr1.png')},
@@ -25,10 +32,16 @@ const avatars = [
   {id: 5, source: require('../assets/avatarr5.png')},
 ];
 
+interface AvatarSelectionScreenParams {
+  userData: UserSignupData;
+  password: string;
+}
+
 const AvatarSelectionScreen: React.FC = () => {
-  const route = useRoute<AvatarSelectionRouteProp>();
-  const navigation = useNavigation<AvatarSelectionNavigationProp>();
-  const {userData, password} = route.params;
+  const route = useRoute<RouteProp<AuthStackParamList, 'AvatarSelection'>>();
+  const auth = useAuth();
+
+  const {userData, password} = route.params as AvatarSelectionScreenParams;
 
   const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,16 +56,57 @@ const AvatarSelectionScreen: React.FC = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const avatarId = `avatar_${selectedAvatarId}`;
-      await registerUser(userData.email, password, userData.fullName, userData.phone, avatarId);
+      const avatarApiId = `avatar_${selectedAvatarId}`;
 
-      Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      navigation.reset({index: 0, routes: [{name: 'Login'}]});
+      // Passo 1: Registrar o usuário (sem o avatar ainda)
+      await registerUser(userData.email, password, userData.fullName, userData.phone);
+
+      Alert.alert('Sucesso', 'Conta criada! Configurando perfil e fazendo login...');
+
+      // Passo 2: Fazer login para obter id_token e refresh_token
+      const loginResponse = await loginUser(userData.email, password);
+      const {id_token: newIdToken, refresh_token: newRefreshToken} = loginResponse;
+
+      // Passo 3: Atualizar o perfil com o avatar usando o token obtido no login
+      const previousAuthHeader = apiClient.defaults.headers.common.Authorization;
+      apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
+
+      try {
+        await updateFullProfile({
+          name: userData.fullName,
+          phone: userData.phone,
+          picture: avatarApiId,
+        });
+      } catch (profileError) {
+        console.error('Erro ao atualizar o perfil com avatar:', profileError);
+        Alert.alert(
+          'Aviso',
+          'Não foi possível definir o avatar, mas sua conta foi criada. Você pode tentar novamente no seu perfil.',
+        );
+      } finally {
+        if (previousAuthHeader) {
+          apiClient.defaults.headers.common.Authorization = previousAuthHeader;
+        } else {
+          delete apiClient.defaults.headers.common.Authorization;
+        }
+      }
+
+      // Passo 4: Fazer login no AuthContext para estabelecer a sessão no app
+      auth.login(newIdToken, newRefreshToken);
     } catch (error: any) {
-      console.error(error);
-      Alert.alert('Erro', error.message || 'Falha no cadastro');
+      console.error('Erro durante o processo de cadastro e login:', error);
+      let errorMessage = 'Falha no cadastro ou login. Tente novamente.';
+      if (error instanceof CustomApiError) {
+        errorMessage = error.message;
+        if (error.data && error.data.error) {
+          errorMessage = `${error.message}: ${error.data.error}`;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -88,11 +142,12 @@ const AvatarSelectionScreen: React.FC = () => {
           ))}
         </View>
         <Button
-          title="CONFIRMAR SELEÇÃO"
+          title={loading ? '' : 'CONFIRMAR SELEÇÃO'}
           onPress={handleConfirmSelection}
           loading={loading}
-          disabled={loading || selectedAvatarId === null}
-        />
+          disabled={loading || selectedAvatarId === null}>
+          {loading && <ActivityIndicator color="#FFFFFF" />}
+        </Button>
       </View>
     </SafeAreaView>
   );

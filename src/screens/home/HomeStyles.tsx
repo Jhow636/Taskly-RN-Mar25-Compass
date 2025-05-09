@@ -138,6 +138,12 @@ export const useHomeStyles = () => {
           color: theme.colors.secondaryText,
           textAlign: 'center',
         },
+        syncIndicator: {
+          position: 'absolute',
+          top: 10, // Ajuste conforme necessário
+          alignSelf: 'center',
+          zIndex: 10,
+        },
       }),
     [theme],
   );

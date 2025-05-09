@@ -1,10 +1,21 @@
-import React, {useState, useCallback} from 'react';
-import {View, Text, FlatList, Pressable, ActivityIndicator} from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useState, useCallback, useEffect} from 'react';
+import {View, Text, FlatList, Pressable, ActivityIndicator, Alert} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {MainStackParamList} from '../../navigation/types';
-import {Task} from '../../data/models/Task';
-import {getAllTasks, setTaskCompletion} from '../../storage/taskStorage';
+import {Task as TaskModel} from '../../data/models/Task';
+import {
+  getAllTasks as getAllLocalTasks,
+  setTaskCompletion as setLocalTaskCompletion,
+  markTaskAsSyncedAndRemove,
+} from '../../storage/taskStorage';
+import {
+  getTasks as getApiTasks,
+  createTask as createApiTask,
+  updateTask as updateApiTask,
+  deleteTaskApi as deleteApiTask,
+  CustomApiError,
+} from '../../services/api';
 import {useHomeStyles} from './HomeStyles';
 import {useTheme} from '../../theme/ThemeContext';
 import {useAuth} from '../../context/AuthContext';
@@ -13,16 +24,16 @@ import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import Header from '../../components/Header';
 import EmptyStateComponent from '../../components/EmptyState.tsx';
 import LogoutButton from '../../components/LogoutButton';
+import {generateUniqueId} from '../../utils/idGenerator';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Home'>;
 
 interface TaskItemProps {
-  task: Task;
+  task: TaskModel;
   onPress: () => void;
   onToggleComplete: () => void;
 }
 
-// TaskItem component remains the same
 const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
   const styles = useHomeStyles();
   return (
@@ -71,48 +82,162 @@ const HomeScreen = () => {
   const styles = useHomeStyles();
   const {theme} = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const {userId} = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const {userId, idToken} = useAuth();
+  const [tasks, setTasks] = useState<TaskModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  const loadTasks = useCallback(() => {
-    if (!userId) {
-      console.log('HomeScreen: No userId, cannot load tasks.');
+  const prepareTaskPayloadForApi = (task: TaskModel) => {
+    return {
+      title: task.title,
+      description: task.description,
+      done: task.isCompleted,
+      subtasks: task.subtasks.map(st => ({title: st.text, done: st.isCompleted})),
+      tags: task.tags,
+    };
+  };
+
+  const syncLocalTasksWithApi = useCallback(
+    async (isManualRefresh = false) => {
+      if (!userId || !idToken) {
+        setIsLoading(false);
+        setTasks([]);
+        return;
+      }
+
+      if (isSyncing && !isManualRefresh) {
+        return;
+      }
+
+      console.log(`HomeScreen: Starting sync (manual: ${isManualRefresh}) for userId: ${userId}`);
+      setIsSyncing(true);
+      if (!isManualRefresh && !initialLoadDone) {
+        setIsLoading(true);
+      }
+
+      const localTasksToSync = getAllLocalTasks(userId).filter(task => task.needsSync);
+      let localSyncOperations = 0;
+
+      for (const localTask of localTasksToSync) {
+        try {
+          if (localTask.isDeleted) {
+            console.log(`Sync: Deleting task ${localTask.id} from API.`);
+            await deleteApiTask(localTask.id);
+            markTaskAsSyncedAndRemove(localTask.id, userId);
+            localSyncOperations++;
+          } else {
+            const isLikelyNewTask = localTask.id.includes('-');
+            const payload = prepareTaskPayloadForApi(localTask);
+
+            if (isLikelyNewTask) {
+              console.log(`Sync: Creating new task "${localTask.title}" on API.`);
+              await createApiTask(payload);
+              markTaskAsSyncedAndRemove(localTask.id, userId);
+              localSyncOperations++;
+            } else {
+              console.log(`Sync: Updating task ${localTask.id} on API.`);
+              await updateApiTask(localTask.id, payload);
+              markTaskAsSyncedAndRemove(localTask.id, userId);
+              localSyncOperations++;
+            }
+          }
+        } catch (error) {
+          console.error(
+            `Sync: Failed to sync task ${localTask.id} (Title: ${localTask.title}):`,
+            error,
+          );
+          if (error instanceof CustomApiError && error.status === 404 && !localTask.isDeleted) {
+            try {
+              console.log(
+                `Sync: Update failed (404), attempting to CREATE task ${localTask.title} as fallback.`,
+              );
+              const createPayload = prepareTaskPayloadForApi(localTask);
+              await createApiTask(createPayload);
+              markTaskAsSyncedAndRemove(localTask.id, userId);
+              localSyncOperations++;
+            } catch (createError) {
+              console.error(
+                `Sync: Fallback CREATE failed for task ${localTask.title}:`,
+                createError,
+              );
+            }
+          }
+        }
+      }
+      console.log(`Sync: ${localSyncOperations} local operations performed.`);
+
+      try {
+        console.log('Sync: Fetching all tasks from API.');
+        const apiTasksData = await getApiTasks();
+        const formattedApiTasks: TaskModel[] = apiTasksData.map((apiTask: any) => ({
+          id: apiTask.id,
+          title: apiTask.title,
+          description: apiTask.description || '',
+          isCompleted: apiTask.done,
+          createdAt: apiTask.createdAt || new Date().toISOString(),
+          updatedAt: apiTask.updatedAt || new Date().toISOString(),
+          dueDate: apiTask.dueDate || '',
+          priority: apiTask.priority || 'MÉDIA',
+          tags: apiTask.tags || [],
+          subtasks: (apiTask.subtasks || []).map((st: any) => ({
+            id: st.id || generateUniqueId(),
+            text: st.title,
+            isCompleted: st.done,
+          })),
+          needsSync: false,
+          isDeleted: false,
+        }));
+        setTasks(formattedApiTasks);
+        console.log(
+          `Sync: Fetched ${formattedApiTasks.length} tasks from API. Displaying API tasks.`,
+        );
+      } catch (error) {
+        console.error('Sync: Error fetching tasks from API:', error);
+        Alert.alert('Erro de Rede', 'Não foi possível buscar suas tarefas. Verifique sua conexão.');
+        if (!isManualRefresh) {
+          const remainingLocalTasks = getAllLocalTasks(userId);
+          setTasks(remainingLocalTasks);
+          console.log(
+            `Sync: API fetch failed. Displaying ${remainingLocalTasks.length} remaining local tasks.`,
+          );
+        }
+      } finally {
+        setIsLoading(false);
+        setIsSyncing(false);
+        if (!initialLoadDone) {
+          setInitialLoadDone(true);
+        }
+        console.log('HomeScreen: Sync process finished.');
+      }
+    },
+    [userId, idToken, isSyncing, initialLoadDone],
+  );
+
+  useEffect(() => {
+    if (userId && idToken && !initialLoadDone) {
+      console.log('HomeScreen: Initial load effect triggered.');
+      syncLocalTasksWithApi(false);
+    } else if (!idToken) {
       setTasks([]);
       setIsLoading(false);
-      return;
+      setInitialLoadDone(false);
+      console.log('HomeScreen: No token, clearing tasks and resetting initial load state.');
     }
-    console.log(`HomeScreen: Loading tasks for userId: ${userId}`);
-    setIsLoading(true);
-    try {
-      const storedTasks = getAllTasks(userId);
-      setTasks(storedTasks);
-    } catch (error) {
-      console.error('Erro ao carregar tarefas:', error);
-      setTasks([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
+  }, [userId, idToken, initialLoadDone, syncLocalTasksWithApi]);
 
   const openCreateModal = () => setIsModalVisible(true);
   const closeCreateModal = () => setIsModalVisible(false);
 
   const handleTaskSaved = () => {
     closeCreateModal();
-    loadTasks();
+    if (userId) {
+      const currentLocalTasks = getAllLocalTasks(userId);
+      setTasks(currentLocalTasks);
+      syncLocalTasksWithApi(true);
+    }
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log('HomeScreen focused, attempting to load tasks.');
-      loadTasks();
-      return () => {
-        console.log('HomeScreen unfocused.');
-      };
-    }, [loadTasks]),
-  );
 
   const handleTaskPress = (taskId: string) => {
     navigation.navigate('TaskDetails', {taskId});
@@ -123,34 +248,36 @@ const HomeScreen = () => {
       console.error('Cannot toggle task completion: User ID is not available.');
       return;
     }
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const success = setTaskCompletion(taskId, !task.isCompleted, userId);
-      if (success) {
-        setTasks(prevTasks =>
-          prevTasks.map(t =>
-            t.id === taskId
-              ? {
-                  ...t,
-                  isCompleted: !t.isCompleted,
-                  subtasks: t.subtasks.map(sub => ({
-                    ...sub,
-                    isCompleted: !task.isCompleted ? true : sub.isCompleted,
-                  })),
-                }
-              : t,
-          ),
-        );
-      } else {
-        console.error('Falha ao atualizar status da tarefa:', taskId);
+    const taskIndex = tasks.findIndex(t => t.id === taskId);
+    if (taskIndex > -1) {
+      const updatedTasks = [...tasks];
+      const taskToToggle = updatedTasks[taskIndex];
+      taskToToggle.isCompleted = !taskToToggle.isCompleted;
+      if (taskToToggle.isCompleted) {
+        taskToToggle.subtasks.forEach(sub => (sub.isCompleted = true));
       }
+      setTasks(updatedTasks);
+      setLocalTaskCompletion(taskId, taskToToggle.isCompleted, userId);
+      syncLocalTasksWithApi(true);
     }
   };
 
-  if (isLoading && !userId) {
+  if (isLoading && !initialLoadDone && tasks.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+  if (!idToken && !isLoading) {
+    return (
+      <View style={styles.outerContainer}>
+        <Header />
+        <View style={styles.contentArea}>
+          <View style={styles.loadingContainer}>
+            <Text>Por favor, faça login para ver suas tarefas.</Text>
+          </View>
+        </View>
       </View>
     );
   }
@@ -160,8 +287,11 @@ const HomeScreen = () => {
   return (
     <View style={styles.outerContainer}>
       <Header />
+      {isSyncing && (
+        <ActivityIndicator style={styles.syncIndicator} size="small" color={theme.colors.primary} />
+      )}
       <View style={styles.contentArea}>
-        {!hasTasks && userId ? (
+        {!hasTasks && userId && !isLoading ? (
           <View style={styles.emptyStateWrapper}>
             <EmptyStateComponent />
             <Pressable
@@ -182,11 +312,13 @@ const HomeScreen = () => {
             )}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContentContainer}
+            refreshing={isSyncing}
+            onRefresh={() => syncLocalTasksWithApi(true)}
           />
         ) : (
           <View style={styles.loadingContainer}>
             {isLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
-            {!isLoading && !userId && <Text>Por favor, faça login para ver suas tarefas.</Text>}
+            {!isLoading && !idToken && <Text>Por favor, faça login para ver suas tarefas.</Text>}
           </View>
         )}
       </View>
