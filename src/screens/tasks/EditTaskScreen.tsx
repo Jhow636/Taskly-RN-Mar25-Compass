@@ -18,11 +18,11 @@ import {useEditTaskStyles} from './EditScreenStyles';
 import {Task} from '../../data/models/Task';
 import {useAuth} from '../../context/AuthContext';
 import {getTaskById, saveTask} from '../../storage/taskStorage';
-import Header from '../../components/Header';
 import {FontAwesomeIcon, FontAwesomeIconStyle} from '@fortawesome/react-native-fontawesome';
 import {faCircleArrowRight} from '@fortawesome/free-solid-svg-icons/faCircleArrowRight';
 import {faCircleXmark} from '@fortawesome/free-solid-svg-icons/faCircleXmark';
 import {useTheme} from '../../theme/ThemeContext';
+import HeaderIntern from '../../components/HeaderIntern/Index';
 
 type EditTaskScreenRouteProp = RouteProp<MainStackParamList, 'EditTask'>;
 type EditTaskScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'EditTask'>;
@@ -64,13 +64,25 @@ const EditTaskScreen = () => {
   useEffect(() => {
     setIsLoading(true);
     if (userId && taskId) {
-      const fetchedTask = getTaskById(taskId, userId);
+      const fetchedTask = getTaskById(taskId, userId); // getTaskById retorna TaskModel com dueDate ISO string
       if (fetchedTask) {
         setTask(fetchedTask);
         setTitle(fetchedTask.title);
         setDescription(fetchedTask.description || '');
-        setDueDate(new Date(fetchedTask.dueDate));
-        setPriority(fetchedTask.priority);
+        // Se fetchedTask.dueDate for uma string vazia (após parseDdMmYyyyToISO retornar ''),
+        // new Date('') resultará em Invalid Date. Devemos tratar isso.
+        // Usar a data atual como fallback se a data armazenada for inválida ou vazia.
+        const initialDueDate = fetchedTask.dueDate ? new Date(fetchedTask.dueDate) : new Date();
+        if (isNaN(initialDueDate.getTime())) {
+          // Verifica se a data é inválida
+          console.warn(
+            `EditTaskScreen: Data de conclusão inválida ('${fetchedTask.dueDate}') para tarefa ${fetchedTask.id}. Usando data atual como fallback.`,
+          );
+          setDueDate(new Date());
+        } else {
+          setDueDate(initialDueDate);
+        }
+        setPriority(fetchedTask.priority); // fetchedTask.priority já deve ser 'ALTA', 'MÉDIA', 'BAIXA'
         setTags(fetchedTask.tags || []);
         navigation.setOptions({title: `Editar: ${fetchedTask.title}`});
       } else {
@@ -158,10 +170,10 @@ const EditTaskScreen = () => {
 
   return (
     <View style={styles.outerContainer}>
-      <Header />
       <GestureHandlerRootView style={styles.root}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.container}>
+            <HeaderIntern />
             <View style={styles.containerChildren}>
               <Text style={styles.label}>Título</Text>
               <TextInput

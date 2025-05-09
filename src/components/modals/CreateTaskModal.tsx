@@ -127,15 +127,13 @@ const CreateTaskModal = ({isVisible, onClose, onSave}: CreateTaskModalProps) => 
       return;
     }
 
-    // Salva a data formatada como string DD/MM/AAAA
-    const formattedDueDate = formatDate(dueDate);
-
     const newTask: Task = {
       id: generateUniqueId(),
       title: trimmedTitle,
       description: trimmedDescription,
-      dueDate: formattedDueDate,
-      priority: 'MÉDIA',
+      // Salvar dueDate como string ISO8601
+      dueDate: dueDate ? dueDate.toISOString() : new Date().toISOString(), // Garante que seja uma string ISO
+      priority: 'MÉDIA', // Prioridade padrão local
       tags: [],
       subtasks: [],
       isCompleted: false,
