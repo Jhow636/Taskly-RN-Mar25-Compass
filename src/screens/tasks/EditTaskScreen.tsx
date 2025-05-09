@@ -22,6 +22,7 @@ import Header from '../../components/Header';
 import {FontAwesomeIcon, FontAwesomeIconStyle} from '@fortawesome/react-native-fontawesome';
 import {faCircleArrowRight} from '@fortawesome/free-solid-svg-icons/faCircleArrowRight';
 import {faCircleXmark} from '@fortawesome/free-solid-svg-icons/faCircleXmark';
+import {useTheme} from '../../theme/ThemeContext';
 
 type EditTaskScreenRouteProp = RouteProp<MainStackParamList, 'EditTask'>;
 type EditTaskScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'EditTask'>;
@@ -43,6 +44,7 @@ const EditTaskScreen = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagsWidths, setTagsWidths] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const theme = useTheme();
 
   const handleTextLayout = (tag, event) => {
     const {width} = event.nativeEvent.layout;
@@ -184,6 +186,7 @@ const EditTaskScreen = () => {
                   value={tagInput}
                   onChangeText={setTagInput}
                   placeholder="Digite uma tag"
+                  placeholderTextColor={theme.theme.colors.mainText}
                   style={[styles.input, styles.tagInputContainer]}
                   onSubmitEditing={handleAddTag}
                 />
