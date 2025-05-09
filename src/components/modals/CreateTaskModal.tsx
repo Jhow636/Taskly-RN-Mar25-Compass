@@ -143,6 +143,7 @@ const CreateTaskModal = ({isVisible, onClose, onSave}: CreateTaskModalProps) => 
       updatedAt: new Date().toISOString(),
       needsSync: true,
       isDeleted: false,
+      _isNewForApi: true,
     };
 
     const success = saveTask(newTask, userId); // Pass userId to saveTask

@@ -9,6 +9,7 @@ import {
   setTaskCompletion as setLocalTaskCompletion,
   markTaskAsSyncedAndRemove,
   saveTaskFromApi,
+  replaceLocalTaskWithApiTask,
 } from '../../storage/taskStorage';
 import {
   getTasks as getApiTasks,
@@ -131,32 +132,46 @@ const HomeScreen = () => {
       let localSyncOperations = 0;
 
       for (const localTask of localTasksToSync) {
-        const isShellForStatusUpdate = localTask.createdAt === new Date(0).toISOString();
-        try {
-          const payload = prepareTaskPayloadForApi(localTask, isShellForStatusUpdate);
+        const isShellForStatusUpdate = localTask.createdAt === new Date(0).toISOString(); // Sua lógica para shell
+        const payload = prepareTaskPayloadForApi(localTask, isShellForStatusUpdate);
+        const isTrulyNewForApi = localTask._isNewForApi === true;
 
+        try {
           if (localTask.isDeleted) {
             console.log(`Sync: Deleting task ${localTask.id} from API.`);
             await deleteApiTask(localTask.id);
             markTaskAsSyncedAndRemove(localTask.id, userId);
             localSyncOperations++;
-          } else {
-            const isLikelyNewTask = localTask.id.includes('-');
-
-            if (isLikelyNewTask && !isShellForStatusUpdate) {
-              console.log(`Sync: Creating new task "${localTask.title}" on API with full payload.`);
-              await createApiTask(payload);
-              markTaskAsSyncedAndRemove(localTask.id, userId);
-              localSyncOperations++;
-            } else {
+          } else if (isTrulyNewForApi && !isShellForStatusUpdate) {
+            console.log(
+              `Sync: Creating new task "${localTask.title}" on API (identified by _isNewForApi).`,
+            );
+            // Assumindo que createApiTask retorna a tarefa criada pela API com o ID do servidor
+            const createdTaskFromApi = await createApiTask(payload);
+            if (createdTaskFromApi && createdTaskFromApi.id) {
+              replaceLocalTaskWithApiTask(localTask.id, createdTaskFromApi, userId);
               console.log(
-                `Sync: Updating task ${localTask.id} (Title: "${localTask.title}") on API. Is shell for status update: ${isShellForStatusUpdate}`,
+                `Sync: Replaced local task ${localTask.id} with API task ${createdTaskFromApi.id}`,
               );
-              await updateApiTask(localTask.id, payload);
-              const taskAfterUpdate = {...localTask, needsSync: false};
-              saveTaskFromApi(taskAfterUpdate, userId);
-              localSyncOperations++;
+            } else {
+              console.error(
+                'Sync: createApiTask did not return a valid task with an ID. Task remains local with _isNewForApi=true.',
+              );
+              // A tarefa localTask continua com _isNewForApi: true, needsSync: true
+              // Não fazer nada aqui, ela será re-tentada na próxima sincronização.
             }
+            localSyncOperations++;
+          } else {
+            // Atualizar tarefa existente ou shell
+            console.log(
+              `Sync: Updating task ${localTask.id} (Title: "${localTask.title}") on API. Is shell: ${isShellForStatusUpdate}. Is new flag: ${isTrulyNewForApi}`,
+            );
+            await updateApiTask(localTask.id, payload);
+            // Marcar como sincronizada (needsSync: false, remover _isNewForApi)
+            const taskAfterUpdate = {...localTask, needsSync: false};
+            delete taskAfterUpdate._isNewForApi;
+            saveTaskFromApi(taskAfterUpdate, userId);
+            localSyncOperations++;
           }
         } catch (error) {
           console.error(
@@ -164,34 +179,27 @@ const HomeScreen = () => {
             error,
           );
           if (error instanceof CustomApiError && error.status === 404 && !localTask.isDeleted) {
-            const isLikelyNewTask = localTask.id.includes('-');
-            if (isShellForStatusUpdate) {
+            if (isTrulyNewForApi) {
+              // Se era uma nova tarefa e deu 404 (ex: createApiTask falhou e o erro não foi pego antes, ou uma lógica de fallback tentou PUT)
+              // Não remova localmente. A tarefa continua como _isNewForApi: true, needsSync: true.
+              console.warn(
+                `Sync: API operation for new task ${localTask.id} resulted in 404. Task remains local. Error: ${error.message}`,
+              );
+            } else if (!isShellForStatusUpdate) {
+              // Era um update para uma tarefa que deveria existir
+              console.warn(
+                `Sync: Update for existing task ${localTask.id} failed (404). Task likely deleted on server. Removing local.`,
+              );
+              markTaskAsSyncedAndRemove(localTask.id, userId);
+            } else {
+              // Era um shell
               console.warn(
                 `Sync: Shell task ${localTask.id} not found (404). Removing local shell.`,
               );
               markTaskAsSyncedAndRemove(localTask.id, userId);
-            } else if (!isLikelyNewTask) {
-              console.warn(
-                `Sync: Update for existing task ${localTask.id} failed (404). Task deleted on server. Removing local.`,
-              );
-              markTaskAsSyncedAndRemove(localTask.id, userId);
-            } else {
-              console.log(
-                `Sync: Update failed (404), attempting to CREATE task ${localTask.title} as fallback.`,
-              );
-              try {
-                const createPayload = prepareTaskPayloadForApi(localTask, false);
-                await createApiTask(createPayload);
-                markTaskAsSyncedAndRemove(localTask.id, userId);
-                localSyncOperations++;
-              } catch (createError) {
-                console.error(
-                  `Sync: Fallback CREATE failed for task ${localTask.title}:`,
-                  createError,
-                );
-              }
             }
           }
+          // Para outros erros, a tarefa permanece com needsSync: true (e _isNewForApi: true se aplicável)
         }
       }
       console.log(`Sync: ${localSyncOperations} local operations performed.`);

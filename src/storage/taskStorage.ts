@@ -110,11 +110,46 @@ export const saveTaskFromApi = (task: Task, userId: string): boolean => {
     const taskKey = getUserTaskKey(userId, task.id);
     // Assegurar que a tarefa da API não seja marcada para nova sincronização
     const taskToSave = {...task, needsSync: false, isDeleted: false};
+    delete taskToSave._isNewForApi; // Remover a flag ao salvar da API
     const taskJson = JSON.stringify(taskToSave);
     storage.set(taskKey, taskJson);
     return true;
   } catch (error) {
     console.error(`Erro ao salvar tarefa ${task.id} da API para usuário ${userId}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Substitui uma tarefa local (com ID temporário) pela tarefa retornada pela API (com ID final).
+ * @param localTaskId O ID da tarefa local a ser removida.
+ * @param apiTask A tarefa completa retornada pela API.
+ * @param userId O ID do usuário.
+ * @returns true se a operação foi bem-sucedida, false caso contrário.
+ */
+export const replaceLocalTaskWithApiTask = (
+  localTaskId: string,
+  apiTask: Task,
+  userId: string,
+): boolean => {
+  if (!userId || !localTaskId || !apiTask || !apiTask.id) {
+    console.error('replaceLocalTaskWithApiTask: Dados inválidos.');
+    return false;
+  }
+  try {
+    const localTaskKey = getUserTaskKey(userId, localTaskId);
+    if (storage.contains(localTaskKey)) {
+      storage.delete(localTaskKey);
+      console.log(`Tarefa local ${localTaskId} removida para substituição pela tarefa da API.`);
+    }
+
+    // Salva a tarefa da API usando saveTaskFromApi, que já lida com needsSync e _isNewForApi
+    return saveTaskFromApi(apiTask, userId);
+  } catch (error) {
+    console.error(
+      `Erro ao substituir tarefa local ${localTaskId} pela tarefa da API ${apiTask.id}:`,
+      error,
+    );
     return false;
   }
 };
