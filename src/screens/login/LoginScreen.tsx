@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, Pressable, Image, ActivityIndicator} from 'react-native';
+import {View, Text, TextInput, Pressable, Image, ActivityIndicator, Modal} from 'react-native';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import {useLoginStyles} from './LoginStyles';
 import {useTheme} from '../../theme/ThemeContext';
@@ -31,6 +31,10 @@ const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const auth = useAuth();
 
+  // Adicionar estado para o modal de erro
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState('');
+
   useEffect(() => {
     const rememberedEmail = getRememberedEmail();
     if (rememberedEmail) {
@@ -38,6 +42,12 @@ const LoginScreen = () => {
       setRememberMe(true);
     }
   }, []);
+
+  // Função para mostrar o modal de erro
+  const showErrorModal = (message: string) => {
+    setErrorModalMessage(message);
+    setErrorModalVisible(true);
+  };
 
   const validateInputs = (): boolean => {
     let isValid = true;
@@ -84,14 +94,15 @@ const LoginScreen = () => {
       console.error('LoginScreen handleLogin Error:', error);
       if (error instanceof CustomApiError) {
         if (error.status === 401) {
-          setLoginError('E-mail ou senha incorretos.');
+          // Mostrar o modal em vez de apenas definir o erro como texto
+          showErrorModal('E-mail e/ou senha incorretos');
         } else if (error.status === -1) {
-          setLoginError('Falha na conexão. Verifique sua internet.');
+          showErrorModal('Falha na conexão. Verifique sua internet.');
         } else {
-          setLoginError(error.message || 'Ocorreu um erro durante o login.');
+          showErrorModal(error.message || 'Ocorreu um erro durante o login.');
         }
       } else {
-        setLoginError('Ocorreu um erro inesperado.');
+        showErrorModal('Ocorreu um erro inesperado.');
       }
     } finally {
       setIsLoggingIn(false);
@@ -186,6 +197,23 @@ const LoginScreen = () => {
         disabled={isLoggingIn}>
         <Text style={styles.buttonSecondaryText}>Criar Conta</Text>
       </Pressable>
+
+      {/* Modal de erro */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Ops! Ocorreu um problema</Text>
+            <Text style={styles.modalMessage}>{errorModalMessage}</Text>
+            <Pressable style={styles.modalButton} onPress={() => setErrorModalVisible(false)}>
+              <Text style={styles.modalButtonText}>FECHAR</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

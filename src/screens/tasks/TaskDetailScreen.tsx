@@ -78,7 +78,8 @@ const TaskDetailScreen = () => {
     if (!task || !userId) {
       return;
     }
-    Alert.alert('Em breve', 'A tela de edição ainda será implementada.');
+    navigation.navigate('EditTask', {taskId});
+    
   };
 
   const handleDeleteTask = () => {
