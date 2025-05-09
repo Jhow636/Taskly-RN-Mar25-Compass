@@ -15,7 +15,6 @@ import {useAuth} from '../context/AuthContext';
 import SignupScreen from '../screens/SignupScreen';
 import AvatarSelectionScreen from '../screens/AvatarSelectionScreen';
 import EditTaskScreen from '../screens/tasks/EditTaskScreen';
-import PreferencesScreen from '../screens/preferences/PreferencesScreen';
 import {View, ActivityIndicator} from 'react-native';
 
 import Terms from '../screens/Terms';
@@ -81,7 +80,6 @@ function HomeStackNavigator() {
       <MainStack.Screen name="Home" component={HomeScreen} />
       <MainStack.Screen name="TaskDetails" component={TaskDetailScreen} />
       <MainStack.Screen name="EditTask" component={EditTaskScreen} />
-      <MainStack.Screen name="Preferences" component={PreferencesScreen} />
     </MainStack.Navigator>
   );
 }
@@ -97,7 +95,6 @@ function MenuStackNavigator() {
       <MainStack.Screen name="Home" component={Menu} />
       <MainStack.Screen name="Terms" component={Terms} />
       <MainStack.Screen name="Preferencies" component={Preferencies} />
-      <MainStack.Screen name="DarkMode" component={PreferencesScreen} />
       <MainStack.Screen name="AvatarUpdate" component={AvatarUpdate} />
       <MainStack.Screen name="UserEdit" component={UserEdit} />
     </MainStack.Navigator>
