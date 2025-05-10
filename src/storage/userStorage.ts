@@ -5,6 +5,8 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  phone?: string;
+  picture?: string;
 }
 
 // Chave prefixo para evitar colisões com outras chaves no MMKV
