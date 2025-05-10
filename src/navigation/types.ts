@@ -1,3 +1,5 @@
+import {Task as TaskModel} from '../data/models/Task';
+
 export type AuthStackParamList = {
   Login: undefined; // Tela de login, não espera parâmetros
   Signup: undefined;
@@ -13,14 +15,12 @@ export type AuthStackParamList = {
 
 export type MainStackParamList = {
   Home: undefined; // Tela inicial, não espera parâmetros
-  TaskDetails: {taskId: string}; // Tela de detalhes, espera o ID da tarefa
-  EditTask: {taskId: string}; // Tela de edição, espera o ID da tarefa
-  Preferences: undefined; // Tela de preferências, não espera parâmetros
-  Menu:undefined;
-  Terms:undefined;
-  Preferencies:undefined;
-  DarkMode:undefined;
-  AvatarUpdate:undefined;
-  UserEdit:undefined;
+  TaskDetails: {task: TaskModel}; // Espera o objeto Task completo
+  EditTask: {taskId: string}; // Espera o id do objeto Task
+  Menu: undefined;
+  Terms: undefined;
+  Preferencies: undefined;
+  AvatarUpdate: undefined;
+  UserEdit: undefined;
   // Adicione outras telas principais aqui
 };

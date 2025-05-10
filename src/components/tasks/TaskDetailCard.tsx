@@ -3,6 +3,7 @@ import {View, Text, Pressable, FlatList, TouchableOpacity, Image} from 'react-na
 import {Swipeable} from 'react-native-gesture-handler';
 import {Task} from '../../data/models/Task';
 import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
+import Icon from '@react-native-vector-icons/feather';
 
 interface TaskDetailCardProps {
   task: Task;
@@ -17,7 +18,7 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
   // Função para renderizar ação de swipe para deletar a tarefa principal
   const renderTaskDeleteAction = () => (
     <TouchableOpacity style={styles.deleteAction} onPress={onDelete}>
-      <Image source={require('../../assets/img/delete-icon.png')} style={styles.icon} />
+      <Icon name="trash" size={30} color={styles.icon.tintColor} />
     </TouchableOpacity>
   );
 
@@ -26,22 +27,21 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
       <View style={styles.taskCard}>
         {/* Cabeçalho do Card */}
         <View style={styles.cardHeader}>
-          <Text style={styles.sectionTitle}>Detalhes da Tarefa</Text>
-          <TouchableOpacity onPress={onEdit} style={styles.editIcon}>
-            <Image source={require('../../assets/img/edit-icon.png')} style={styles.icon} />
+          <Text style={styles.sectionTitle}>Titulo</Text>
+          <TouchableOpacity onPress={onEdit}>
+            <Image source={require('../../assets/img/editIcon.png')} style={styles.editIcon} />
           </TouchableOpacity>
         </View>
 
         {/* Título */}
-        <Text style={styles.label}>Título</Text>
-        <Text style={styles.value}>{task.title}</Text>
+        <Text style={[styles.value, styles.title]}>{task.title}</Text>
 
         {/* Descrição */}
-        <Text style={styles.label}>Descrição</Text>
+        <Text style={styles.sectionTitle}>Descrição</Text>
         <Text style={styles.value}>{task.description}</Text>
 
         {/* Tags */}
-        <Text style={styles.label}>Tags</Text>
+        <Text style={styles.sectionTitle}>Tags</Text>
         {task.tags && task.tags.length > 0 ? (
           <FlatList
             horizontal
@@ -60,7 +60,7 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
         )}
 
         {/* Prioridade */}
-        <Text style={styles.label}>Prioridade</Text>
+        <Text style={styles.sectionTitle}>Prioridade</Text>
         <View style={[styles.priorityBadge, styles[`priority${task.priority}`]]}>
           <Text style={[styles.priorityText]}>{task.priority}</Text>
         </View>

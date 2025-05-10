@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
-import { StyleSheet } from 'react-native'; // Ensure this is imported
-import { Priority } from '../../data/models/Task';
-import { useTheme } from '../../theme/ThemeContext'// Assuming useTheme is a custom hook
+import {useMemo} from 'react';
+import {StyleSheet} from 'react-native'; // Ensure this is imported
+import {Priority} from '../../data/models/Task';
+import {useTheme} from '../../theme/ThemeContext'; // Assuming useTheme is a custom hook
 
 export const useEditTaskStyles = () => {
-  const { theme } = useTheme();
+  const {theme} = useTheme();
 
   return useMemo(() => {
     const getPriorityStyles = (priority: Priority) => {
@@ -33,7 +33,7 @@ export const useEditTaskStyles = () => {
             borderWidth: 0,
             justifyContent: 'center',
             alignItems: 'center',
-        };
+          };
       }
     };
 
@@ -44,7 +44,7 @@ export const useEditTaskStyles = () => {
 
       container: {
         flex: 1,
-        padding: 30
+        padding: 30,
       },
       containerChildren: {
         backgroundColor: theme.colors.secondaryBg,
@@ -56,18 +56,21 @@ export const useEditTaskStyles = () => {
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-        width: '100%'
+        width: '100%',
+        color: theme.colors.mainText,
       },
       outerContainer: {
         flex: 1,
+        backgroundColor: theme.colors.background,
       },
       label: {
         ...theme.typography.mediumTitle,
-      fontSize: 18,
-      marginBottom: 6,
-      color: theme.colors.secondaryText,
-    },
-    input: {
+        fontSize: 20,
+        marginBottom: 4,
+        marginTop: 12,
+        color: theme.colors.secondaryText,
+      },
+      input: {
         backgroundColor: theme.colors.secondaryBg, // Fundo um pouco diferente para destaque
         borderRadius: 8,
         paddingHorizontal: 15,
@@ -77,53 +80,46 @@ export const useEditTaskStyles = () => {
         color: theme.colors.mainText,
         borderWidth: 2,
         borderColor: theme.colors.primary, // Borda sutil
-    },
-    scrollContent: {
+      },
+      scrollContent: {
         paddingBottom: 40,
       },
-    multilineInput: {
-      height: 100,
-      textAlignVertical: 'top',
-    },
-    priorityContainer: {
-      flexDirection: 'row',
-      width: '100%',
-      marginBottom: 12,
-    },
-    priorityButton: {
-      paddingVertical: 2,
-      paddingHorizontal: 12,
-      borderRadius: 6,
-      marginRight: 10,
-      borderWidth: 2,
-      borderColor: theme.colors.primary,
-      width: '30%',
-    },
-    priorityALTA: getPriorityStyles('ALTA'),
-    priorityMÉDIA: getPriorityStyles('MÉDIA'),
-    priorityBAIXA: getPriorityStyles('BAIXA'),
-    priorityText: {
-      ...theme.typography.caption,
-      color: theme.colors.primary,
-      fontWeight: 'regular',
-      textTransform: 'uppercase',
-      textAlign: 'center',
-      fontSize: 16
-    },
-    errorText: {
+      multilineInput: {
+        height: 100,
+        textAlignVertical: 'top',
+      },
+      priorityContainer: {
+        flexDirection: 'row',
+        width: '100%',
+        marginBottom: 12,
+      },
+      priorityButton: {
+        paddingVertical: 2,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+        marginRight: 10,
+        borderWidth: 2,
+        borderColor: theme.colors.primary,
+        width: '30%',
+      },
+      priorityALTA: getPriorityStyles('ALTA'),
+      priorityMÉDIA: getPriorityStyles('MÉDIA'),
+      priorityBAIXA: getPriorityStyles('BAIXA'),
+      priorityText: {
+        ...theme.typography.caption,
+        color: theme.colors.primary,
+        fontWeight: 'regular',
+        textTransform: 'uppercase',
+        textAlign: 'center',
+        fontSize: 16,
+      },
+      errorText: {
         ...theme.typography.caption,
         color: theme.colors.error,
         alignSelf: 'flex-start',
         marginLeft: 5,
         marginBottom: 12, // Espaço depois da mensagem de erro
         height: 15, // Reserva o espaço mesmo sem erro
-      },
-      label: {
-        ...theme.typography.mediumTitle,
-        color: theme.colors.secondaryText,
-        marginTop: 12,
-        marginBottom: 4,
-        fontSize: 20
       },
       dateInputButton: {
         justifyContent: 'center',
@@ -132,7 +128,7 @@ export const useEditTaskStyles = () => {
         ...theme.typography.regular,
         color: theme.colors.mainText,
       },
-    buttonContainer: {
+      buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -167,18 +163,18 @@ export const useEditTaskStyles = () => {
       },
       deleteIcon: {
         color: theme.colors.error,
-    },
-    submitIcon: {
+      },
+      submitIcon: {
         color: theme.colors.secondaryAccent,
-    },
-    tagContainer :{
+      },
+      tagContainer: {
         flexDirection: 'row',
-    },
-    tagInputContainer : {
+      },
+      tagInputContainer: {
         width: '100%',
-        position: 'relative'
-    },
-    tagChildrenContainer : {
+        position: 'relative',
+      },
+      tagChildrenContainer: {
         backgroundColor: theme.colors.primaryLight,
         borderRadius: 8,
         marginRight: 4,
@@ -187,24 +183,22 @@ export const useEditTaskStyles = () => {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,
-        marginBottom: 10
-    },
-    textTag : {
-      ...theme.typography.regular,
-      fontSize: 16,
-      color: theme.colors.mainText
-    },
-    tagOuterContainer :{
-      flexDirection: 'row',
-      flexWrap: 'wrap'
-    },
-    buttonArrow :{
-      position: 'absolute',
-      right: 12,
-      top: 16,
-
-    }
-
+        marginBottom: 10,
+      },
+      textTag: {
+        ...theme.typography.regular,
+        fontSize: 16,
+        color: theme.colors.mainText,
+      },
+      tagOuterContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+      },
+      buttonArrow: {
+        position: 'absolute',
+        right: 12,
+        top: 16,
+      },
     });
   }, [theme]);
 };
