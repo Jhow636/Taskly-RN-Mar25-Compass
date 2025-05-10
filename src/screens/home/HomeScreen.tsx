@@ -63,7 +63,9 @@ const mapApiPriorityToLocal = (apiPriority: number | string | undefined): Priori
 
 // Helper para formatar data ISO para dd/mm/yyyy
 const formatDateToDdMmYyyy = (isoDateString: string): string => {
-  if (!isoDateString) return '';
+  if (!isoDateString) {
+    return '';
+  }
   try {
     const date = new Date(isoDateString);
     const day = String(date.getDate()).padStart(2, '0');
@@ -330,7 +332,29 @@ const HomeScreen = () => {
 
         if (userId) {
           for (const apiTask of formattedApiTasks) {
-            saveTaskFromApi(apiTask, userId); // saveTaskFromApi salva com os formatos locais corretos
+            const localTask = getAllLocalTasks(userId).find(t => t.id === apiTask.id);
+
+            // Se a task local tem alterações pendentes, NÃO sobrescreva!
+            if (localTask && localTask.needsSync) {
+              continue;
+            }
+
+            // Merge de subtarefas: preserva IDs locais se o texto for igual
+            const mergedSubtasks = (apiTask.subtasks || []).map(apiSub => {
+              const localSub = localTask?.subtasks?.find(ls => ls.text === apiSub.text);
+              return {
+                ...apiSub,
+                id: localSub ? localSub.id : apiSub.id || generateUniqueId(),
+              };
+            });
+
+            saveTaskFromApi(
+              {
+                ...apiTask,
+                subtasks: mergedSubtasks,
+              },
+              userId,
+            );
           }
           const updatedLocalTasks = getAllLocalTasks(userId);
           setTasks(updatedLocalTasks);
