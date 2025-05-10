@@ -25,11 +25,11 @@ import {useAuth} from '../context/AuthContext';
 import {UserSignupData} from './SignupScreen';
 
 const avatars = [
-  {id: 1, source: require('../assets/avatarr1.png')},
-  {id: 2, source: require('../assets/avatarr2.png')},
-  {id: 3, source: require('../assets/avatarr3.png')},
-  {id: 4, source: require('../assets/avatarr4.png')},
-  {id: 5, source: require('../assets/avatarr5.png')},
+  {id: 1, source: require('../assets/avatarr1.jpg')},
+  {id: 2, source: require('../assets/avatarr2.jpg')},
+  {id: 3, source: require('../assets/avatarr3.jpg')},
+  {id: 4, source: require('../assets/avatarr4.jpg')},
+  {id: 5, source: require('../assets/avatarr5.jpg')},
 ];
 
 interface AvatarSelectionScreenParams {
