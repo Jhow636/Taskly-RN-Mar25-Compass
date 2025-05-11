@@ -20,6 +20,8 @@ import useForm from '../hooks/useForm';
 
 import BiometricsModal from '../components/BiometricsModal';
 import {activateBiometrics} from '../services/biometrics';
+import {useTheme} from '../theme/ThemeContext';
+import {Theme} from '../theme/Theme';
 
 export interface UserSignupData {
   fullName: string;
@@ -39,6 +41,8 @@ export type RootStackParamList = {
 const SignupScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Signup'>>();
   const passwordRef = useRef<string>('');
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
 
   const [showBiometricModal, setShowBiometricModal] = useState(false);
   const [biometryType, setBiometryType] = useState<string | null>(null);
@@ -59,31 +63,51 @@ const SignupScreen: React.FC = () => {
   );
 
   const validateFullName = (name: string): string | null => {
-    if (!name) return 'Nome é obrigatório';
+    if (!name) {
+      return 'Nome é obrigatório';
+    }
     const nameParts = name.trim().split(/\s+/);
-    if (nameParts.length < 2) return 'Nome deve ser composto (mínimo dois nomes)';
-    if (name.length > 120) return 'Nome deve ter no máximo 120 caracteres';
+    if (nameParts.length < 2) {
+      return 'Nome deve ser composto (mínimo dois nomes)';
+    }
+    if (name.length > 120) {
+      return 'Nome deve ter no máximo 120 caracteres';
+    }
     return null;
   };
 
   const validateEmail = (email: string): string | null => {
-    if (!email) return 'E-mail é obrigatório';
+    if (!email) {
+      return 'E-mail é obrigatório';
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Formato de e-mail inválido';
+    if (!emailRegex.test(email)) {
+      return 'Formato de e-mail inválido';
+    }
     return null;
   };
 
   const validatePhone = (phone: string): string | null => {
-    if (!phone) return 'Número é obrigatório';
+    if (!phone) {
+      return 'Número é obrigatório';
+    }
     const phoneRegex = /^\([0-9]{2}\) 9 [0-9]{4}-[0-9]{4}$/;
-    if (!phoneRegex.test(phone)) return 'Formato: (DDD) 9 dddd-dddd';
+    if (!phoneRegex.test(phone)) {
+      return 'Formato: (DDD) 9 dddd-dddd';
+    }
     return null;
   };
 
   const validatePassword = (password: string): string | null => {
-    if (!password) return 'Senha é obrigatória';
-    if (password.length < 8) return 'Senha deve ter no mínimo 8 caracteres';
-    if (password.length > 20) return 'Senha deve ter no máximo 20 caracteres';
+    if (!password) {
+      return 'Senha é obrigatória';
+    }
+    if (password.length < 8) {
+      return 'Senha deve ter no mínimo 8 caracteres';
+    }
+    if (password.length > 20) {
+      return 'Senha deve ter no máximo 20 caracteres';
+    }
 
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
@@ -97,8 +121,12 @@ const SignupScreen: React.FC = () => {
   };
 
   const validatePasswordConfirmation = (password: string, confirmation: string): string | null => {
-    if (!confirmation) return 'Confirmação de senha é obrigatória';
-    if (password !== confirmation) return 'As senhas devem ser iguais';
+    if (!confirmation) {
+      return 'Confirmação de senha é obrigatória';
+    }
+    if (password !== confirmation) {
+      return 'As senhas devem ser iguais';
+    }
     return null;
   };
 
@@ -144,7 +172,9 @@ const SignupScreen: React.FC = () => {
   };
 
   const handleContinue = async () => {
-    if (!validateAllFields()) return;
+    if (!validateAllFields()) {
+      return;
+    }
 
     const values = getValues();
     const userData: UserSignupData = {
@@ -187,7 +217,7 @@ const SignupScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}>
@@ -258,18 +288,29 @@ const SignupScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {flex: 1, backgroundColor: '#FFFFFF'},
-  container: {flex: 1},
-  scrollContent: {flexGrow: 1, padding: 20},
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 26,
-    textAlign: 'center',
-  },
-  form: {width: '100%'},
-});
+const getStyles = (theme: Theme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    container: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      padding: 20,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.mainText,
+      marginBottom: 26,
+      textAlign: 'center',
+    },
+    form: {
+      width: '100%',
+    },
+  });
 
 export default SignupScreen;
