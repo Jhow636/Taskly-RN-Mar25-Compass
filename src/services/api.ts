@@ -1,4 +1,5 @@
 import axios, {AxiosError, InternalAxiosRequestConfig} from 'axios';
+import {UserProfile} from '../context/AuthContext';
 
 const API_BASE_URL = 'http://15.229.11.44:3000';
 
@@ -280,10 +281,10 @@ export const updateFullProfile = async (profileData: {
 // --- Outras funções da API que você pode ter ---
 
 // GET /profile
-export const getProfile = async (): Promise<any> => {
+export const getProfile = async (): Promise<UserProfile> => {
   // Defina uma interface para o perfil
   const response = await apiClient.get('/profile');
-  return response.data;
+  return response.data as UserProfile;
 };
 
 // PUT /profile/name
