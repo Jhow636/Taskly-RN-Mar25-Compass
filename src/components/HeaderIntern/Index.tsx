@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {View, Text, Image, Pressable} from 'react-native';
 import {useHeaderInternStyles} from './HeaderIntern.style';
 import {useNavigation} from '@react-navigation/native';
 import Icon from '@react-native-vector-icons/feather';
 import {useTheme} from '../../theme/ThemeContext';
-import {getRememberedEmail, getUserByEmail} from '../../storage/userStorage';
+import {useAuth} from '../../context/AuthContext';
 
 const avatarImages: Record<string, any> = {
   avatar_1: require('../../assets/avatarr1.jpg'),
@@ -18,20 +18,11 @@ const HeaderIntern: React.FC = () => {
   const styles = useHeaderInternStyles();
   const navigation = useNavigation();
   const {theme} = useTheme();
-
-  const [userPicture, setUserPicture] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const email = getRememberedEmail();
-    if (email) {
-      const user = getUserByEmail(email);
-      setUserPicture(user?.picture);
-    }
-  }, []);
+  const {userProfile} = useAuth();
 
   const avatarSource =
-    userPicture && avatarImages[userPicture]
-      ? avatarImages[userPicture]
+    userProfile?.picture && avatarImages[userProfile.picture]
+      ? avatarImages[userProfile.picture]
       : require('../../assets/imgs/profileImage.png');
 
   return (
