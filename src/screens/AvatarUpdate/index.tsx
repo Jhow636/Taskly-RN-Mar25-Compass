@@ -1,5 +1,15 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert, Animated, ScrollView} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  StatusBar,
+  Alert,
+  Animated,
+  ScrollView,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import Button from '../../components/Button';
@@ -9,8 +19,7 @@ import {UserEditStackParamList} from '../UserEdit';
 import {useTheme} from '../../theme/ThemeContext';
 import {Theme} from '../../theme/Theme';
 import BackMenu from '../../components/BackButtom';
-import { calculateProgressBarWidth } from '../../utils/AnimationUtils';
-
+import {calculateProgressBarWidth} from '../../utils/AnimationUtils';
 
 const avatars = [
   {id: 1, source: require('../../assets/avatarr1.jpg')},
@@ -26,11 +35,11 @@ const AvatarUpdate: React.FC = () => {
   const progressoTotal = 100;
   const [carregando, setCarregando] = useState(true);
   const animatedProgress = useRef(new Animated.Value(0)).current;
-  const { widthInterpolation } = calculateProgressBarWidth(
-      animatedProgress,
-      progressoAtual,
-      progressoTotal,
-    );
+  const {widthInterpolation} = calculateProgressBarWidth(
+    animatedProgress,
+    progressoAtual,
+    progressoTotal,
+  );
   const navigation = useNavigation();
   const route = useRoute<RouteProp<UserEditStackParamList, 'AvatarUpdate'>>();
   const {newName, newPhone, currentPicture} = route.params;
@@ -41,26 +50,18 @@ const AvatarUpdate: React.FC = () => {
   const auth = useAuth();
   const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
 
-
-useEffect(() => {
+  useEffect(() => {
     let contador = 50;
-      setProgressoAtual(contador);
+    setProgressoAtual(contador);
 
-      if (contador >= progressoTotal) {
-        setCarregando(false);
-      }
-
-
+    if (contador >= progressoTotal) {
+      setCarregando(false);
+    }
   }, []);
 
   const incrementProgress = () => {
-    setProgressoAtual((prev) => Math.min(prev + 50, progressoTotal));
+    setProgressoAtual(prev => Math.min(prev + 50, progressoTotal));
   };
-
-
-
-
-
 
   useEffect(() => {
     if (currentPicture) {
@@ -97,7 +98,7 @@ useEffect(() => {
         picture: pictureToUpdate,
       });
 
-      navigation.navigate('Home', { avatarUpdated: true });
+      navigation.navigate('Home', {avatarUpdated: true});
       await auth.refreshUserProfile();
     } catch (error: any) {
       console.error('Erro ao atualizar perfil completo:', error);
@@ -116,41 +117,36 @@ useEffect(() => {
       <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.top}>
-            <BackMenu text="EDIÇÂO DE PERFIL" />
+          <BackMenu text="EDIÇÂO DE PERFIL" />
         </View>
         <View style={styles.progressBarContainer}>
-            <View style={styles.progressBarBackground}>
-              <Animated.View
-                style={[
-                  styles.progressBarFill,
-                  { width: widthInterpolation },
-                ]}
-                />
-            </View>
+          <View style={styles.progressBarBackground}>
+            <Animated.View style={[styles.progressBarFill, {width: widthInterpolation}]} />
           </View>
+        </View>
         <View style={styles.container}>
-          <Text style={styles.title}>ATUALIZE SEU AVATAR</Text>
+          <Text style={styles.title}>SELECIONE SEU AVATAR</Text>
           <Text style={styles.subtitle}>(Escolha somente um)</Text>
           <View style={styles.avatarContainer}>
             {avatars.map(avatar => (
               <TouchableOpacity
-              key={avatar.id}
-              style={[
-                styles.avatarButton,
-                selectedAvatarId === avatar.id && styles.selectedAvatarButton,
-              ]}
-              onPress={() => handleSelectAvatar(avatar.id)}
-              activeOpacity={0.7}>
+                key={avatar.id}
+                style={[
+                  styles.avatarButton,
+                  selectedAvatarId === avatar.id && styles.selectedAvatarButton,
+                ]}
+                onPress={() => handleSelectAvatar(avatar.id)}
+                activeOpacity={0.7}>
                 <Image
                   source={avatar.source}
                   style={[
                     styles.avatarImage,
                     selectedAvatarId !== null &&
-                    selectedAvatarId !== avatar.id &&
-                    styles.opaqueAvatar,
+                      selectedAvatarId !== avatar.id &&
+                      styles.opaqueAvatar,
                   ]}
                   resizeMode="cover"
-                  />
+                />
               </TouchableOpacity>
             ))}
           </View>
@@ -159,7 +155,7 @@ useEffect(() => {
             onPress={handleConfirmSelection}
             loading={loading}
             disabled={loading}
-            />
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -173,7 +169,7 @@ const getStyles = (theme: Theme) =>
       backgroundColor: theme.colors.background,
     },
     container: {
-      padding:40,
+      padding: 30,
       flex: 1,
       alignItems: 'center',
     },
@@ -195,7 +191,7 @@ const getStyles = (theme: Theme) =>
       width: '100%',
       paddingLeft: 40,
       paddingRight: 40,
-      paddingTop:40,
+      paddingTop: 40,
     },
     progressBarBackground: {
       backgroundColor: theme.colors.primaryLight,
@@ -207,7 +203,7 @@ const getStyles = (theme: Theme) =>
     progressBarFill: {
       backgroundColor: theme.colors.primary,
       height: '100%',
-      paddingTop:40,
+      paddingTop: 40,
     },
     avatarContainer: {
       flexDirection: 'row',
@@ -235,8 +231,8 @@ const getStyles = (theme: Theme) =>
     opaqueAvatar: {
       opacity: 0.4,
     },
-    top:{
-     paddingTop:20,
+    top: {
+      paddingTop: 20,
     },
     scrollContent: {
       flexGrow: 1, // Permite que o conteúdo ocupe o espaço necessário

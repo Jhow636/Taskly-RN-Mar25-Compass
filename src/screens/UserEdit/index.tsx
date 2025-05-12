@@ -137,7 +137,7 @@ const UserEdit: React.FC = () => {
         style={styles.container}>
         <View>
           <View>
-            <BackMenu text="Editar Perfil" />
+            <BackMenu text="EDIÇÃO DE PERFIL" />
           </View>
           {carregandoFormulario ? (
             <View style={styles.progressBarContainer}>
@@ -148,7 +148,6 @@ const UserEdit: React.FC = () => {
               <View style={styles.progressBarBackground}>
                 <Animated.View style={[styles.progressBarFill, {width: widthInterpolation}]} />
               </View>
-             
             </View>
           )}
         </View>
