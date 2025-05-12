@@ -1,5 +1,13 @@
 import React, {useState, useCallback} from 'react';
-import {View, ScrollView, ActivityIndicator, Alert, Text} from 'react-native';
+import {
+  View,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import {RouteProp, useRoute, useNavigation, useFocusEffect} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -248,23 +256,29 @@ const TaskDetailScreen = () => {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <HeaderIntern />
-        <TaskDetailCard
-          task={task}
-          onEdit={handleEditTask}
-          onToggleComplete={handleToggleTaskComplete}
-          onDelete={handleDeleteTask}
-        />
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // ajuste conforme seu header
+      >
+        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+          <HeaderIntern />
+          <TaskDetailCard
+            task={task}
+            onEdit={handleEditTask}
+            onToggleComplete={handleToggleTaskComplete}
+            onDelete={handleDeleteTask}
+          />
 
-        <SubtaskListSection
-          subtasks={task.subtasks}
-          onToggleSubtask={handleToggleSingleSubtaskComplete}
-          onDeleteSubtask={handleDeleteSingleSubtask}
-          onAddSubtaskConfirmed={handleAddSubtaskConfirmedFromSection}
-          onUpdateSubtaskText={handleUpdateSubtaskText}
-        />
-      </ScrollView>
+          <SubtaskListSection
+            subtasks={task.subtasks}
+            onToggleSubtask={handleToggleSingleSubtaskComplete}
+            onDeleteSubtask={handleDeleteSingleSubtask}
+            onAddSubtaskConfirmed={handleAddSubtaskConfirmedFromSection}
+            onUpdateSubtaskText={handleUpdateSubtaskText}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </GestureHandlerRootView>
   );
 };
