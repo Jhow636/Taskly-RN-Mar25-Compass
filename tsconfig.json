@@ -3,6 +3,7 @@
 
   "compilerOptions": {
     // other options
-    "esModuleInterop": true
+    "esModuleInterop": true,
+     "jsx": "react-native"
   }
 }
