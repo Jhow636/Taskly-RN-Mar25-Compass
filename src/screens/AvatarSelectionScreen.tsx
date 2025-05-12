@@ -77,7 +77,7 @@ const AvatarSelectionScreen: React.FC = () => {
       try {
         await updateFullProfile({
           name: userData.fullName,
-          phone: userData.phone,
+          phone_number: userData.phone,
           picture: avatarApiId,
         });
       } catch (profileError) {
