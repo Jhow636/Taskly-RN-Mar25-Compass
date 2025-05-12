@@ -22,10 +22,13 @@ import {useHomeStyles} from './HomeStyles';
 import {useTheme} from '../../theme/ThemeContext';
 import {useAuth} from '../../context/AuthContext';
 import CreateTaskModal from '../../components/modals/CreateTaskModal';
+import FilterModal, {FilterOptions} from '../../components/FilterModal';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import Header from '../../components/Header';
 import EmptyStateComponent from '../../components/EmptyState.tsx';
 import {generateUniqueId} from '../../utils/idGenerator';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faFilter} from '@fortawesome/free-solid-svg-icons/faFilter';
 
 // Helper para mapear prioridade local para valor da API
 const mapPriorityToApiValue = (priority: Priority): 1 | 2 | 3 => {
@@ -124,7 +127,7 @@ interface TaskItemProps {
   onToggleComplete: () => void;
 }
 
-const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
+const TaskItem: React.FC<TaskItemProps> = ({task, onPress, onToggleComplete}) => {
   const styles = useHomeStyles();
   return (
     <View style={styles.taskItem}>
@@ -168,16 +171,50 @@ const TaskItem = ({task, onPress, onToggleComplete}: TaskItemProps) => {
   );
 };
 
-const HomeScreen = () => {
+const HomeScreen: React.FC = () => {
   const styles = useHomeStyles();
   const {theme} = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const {userId, idToken, registerSyncFunction} = useAuth();
   const [tasks, setTasks] = useState<TaskModel[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [displayedTasks, setDisplayedTasks] = useState<TaskModel[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState<boolean>(false);
+  const [initialLoadDone, setInitialLoadDone] = useState<boolean>(false);
+  const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+
+  const applyFilters = useCallback(
+    (filters: FilterOptions, taskList = tasks): void => {
+      let filteredTasks = [...taskList];
+
+      // Apply tag filters
+      if (filters.tags && filters.tags.length > 0) {
+        filteredTasks = filteredTasks.filter(task =>
+          task.tags.some(tag => filters.tags.includes(tag)),
+        );
+      }
+
+      // Apply priority sorting
+      filteredTasks.sort((a, b) => {
+        const priorityValues: {[key: string]: number} = {ALTA: 3, MÉDIA: 2, BAIXA: 1};
+        const priorityA = priorityValues[a.priority] || 2;
+        const priorityB = priorityValues[b.priority] || 2;
+
+        if (filters.orderBy === 'high-to-low') {
+          return priorityB - priorityA;
+        } else {
+          return priorityA - priorityB;
+        }
+      });
+
+      setDisplayedTasks(filteredTasks);
+      setActiveFilters(filters);
+    },
+    [tasks],
+  );
 
   const syncLocalTasksWithApi = useCallback(
     async (isManualRefresh = false) => {
@@ -191,41 +228,31 @@ const HomeScreen = () => {
           };
         }
 
-        const deadlineFormatted = formatDateToDdMmYyyy(task.dueDate); // task.dueDate deve ser ISO string
+        const deadlineFormatted = formatDateToDdMmYyyy(task.dueDate);
 
-        // Começa com os campos que sempre são enviados ou têm defaults na API
         const payload: any = {
           title: task.title,
           description: task.description,
           done: task.isCompleted,
-          priority: mapPriorityToApiValue(task.priority), // task.priority deve ser 'ALTA', 'MÉDIA', 'BAIXA'
+          priority: mapPriorityToApiValue(task.priority),
           subtasks: task.subtasks.map(st => ({title: st.text, done: st.isCompleted})),
           tags: task.tags,
         };
 
-        // Adicionar deadline ao payload apenas se for uma string formatada não vazia.
-        // Isso evita enviar "deadline": "" para a API.
         if (deadlineFormatted) {
           payload.deadline = deadlineFormatted;
         } else if (task._isNewForApi) {
-          // Se é uma nova tarefa (POST) e a data formatada é vazia,
-          // isso indica um problema na lógica de criação/validação, pois deadline é obrigatório no POST.
-          // O CreateTaskModal deve garantir que dueDate seja sempre uma data válida.
           console.error(
             `CRÍTICO: Tentando criar nova tarefa (POST) com deadline formatado vazio para task.dueDate: ${task.dueDate}. Task ID local: ${task.id}. Verifique a lógica do CreateTaskModal.`,
           );
-          // Para evitar falha na API, podemos enviar uma data padrão, mas o ideal é corrigir a origem.
-          // payload.deadline = formatDateToDdMmYyyy(new Date().toISOString()); // Exemplo de fallback
         }
-        // Se não for uma nova tarefa (PUT) e deadlineFormatted for vazio, o campo deadline não será incluído no payload,
-        // o que é o comportamento correto se a API trata campos ausentes como "não atualizar".
-
         return payload;
       };
 
       if (!userId || !idToken) {
         setIsLoading(false);
         setTasks([]);
+        setDisplayedTasks([]);
         return;
       }
 
@@ -383,7 +410,7 @@ const HomeScreen = () => {
         console.log('HomeScreen: Sync process finished.');
       }
     },
-    [userId, idToken, isSyncing, initialLoadDone],
+    [userId, idToken, isSyncing, initialLoadDone, activeFilters, applyFilters],
   );
 
   useEffect(() => {
@@ -396,20 +423,41 @@ const HomeScreen = () => {
       syncLocalTasksWithApi(false);
     } else if (!idToken) {
       setTasks([]);
+      setDisplayedTasks([]);
       setIsLoading(false);
       setInitialLoadDone(false);
       console.log('HomeScreen: No token, clearing tasks and resetting initial load state.');
     }
   }, [userId, idToken, initialLoadDone, syncLocalTasksWithApi]);
 
-  const openCreateModal = () => setIsModalVisible(true);
-  const closeCreateModal = () => setIsModalVisible(false);
+  const openCreateModal = (): void => setIsModalVisible(true);
+  const closeCreateModal = (): void => setIsModalVisible(false);
 
-  const handleTaskSaved = () => {
+  const openFilterModal = (): void => setIsFilterModalVisible(true);
+  const closeFilterModal = (): void => setIsFilterModalVisible(false);
+
+  const clearFilters = (): void => {
+    setActiveFilters(null);
+    setDisplayedTasks(tasks);
+  };
+
+  const handleApplyFilters = (filters: FilterOptions): void => {
+    applyFilters(filters);
+  };
+
+  const handleTaskSaved = (): void => {
     closeCreateModal();
     if (userId) {
       const currentLocalTasks = getAllLocalTasks(userId);
       setTasks(currentLocalTasks);
+
+      // Apply current filters if they exist
+      if (activeFilters) {
+        applyFilters(activeFilters, currentLocalTasks);
+      } else {
+        setDisplayedTasks(currentLocalTasks);
+      }
+
       syncLocalTasksWithApi(true);
     }
   };
@@ -418,7 +466,7 @@ const HomeScreen = () => {
     navigation.navigate('TaskDetails', {task});
   };
 
-  const handleToggleComplete = (taskId: string) => {
+  const handleToggleComplete = (taskId: string): void => {
     if (!userId) {
       console.error('Cannot toggle task completion: User ID is not available.');
       return;
@@ -465,23 +513,58 @@ const HomeScreen = () => {
 
   const activeTasks = tasks.filter(task => !task.isDeleted);
   const hasTasks = activeTasks.length > 0;
+  const hasFilters = !!activeFilters && (activeFilters.tags?.length > 0 || true);
 
   return (
     <View style={styles.outerContainer}>
       <Header />
+      {/* Botão de filtro no topo */}
+      <Pressable
+        style={styles.topFilterButton}
+        onPress={openFilterModal}
+        accessibilityLabel="Abrir filtros"
+        hitSlop={10}>
+        <FontAwesomeIcon icon={faFilter} size={22} color={'#B58B46'} />
+      </Pressable>
       {isSyncing && (
         <ActivityIndicator style={styles.syncIndicator} size="small" color={theme.colors.primary} />
       )}
+
+      {/* Active Filters Bar */}
+      {hasFilters && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={styles.activeFiltersText}>
+            {activeFilters?.tags.length ? `Tags: ${activeFilters.tags.join(', ')} • ` : ''}
+            Ordenado por prioridade (
+            {activeFilters?.orderBy === 'high-to-low' ? 'alta para baixa' : 'baixa para alta'})
+          </Text>
+          <Pressable onPress={clearFilters}>
+            <Text style={styles.clearFiltersText}>Limpar</Text>
+          </Pressable>
+        </View>
+      )}
+
       <View style={styles.contentArea}>
         {!hasTasks && userId && !isLoading ? (
-          <View style={styles.emptyStateWrapper}>
-            <EmptyStateComponent />
-            <Pressable
-              onPress={openCreateModal}
-              style={[styles.createButton, styles.createButtonEmpty]}>
-              <Text style={styles.createButtonText}>Criar Tarefa</Text>
-            </Pressable>
-          </View>
+          activeFilters ? (
+            <View style={styles.noFilteredTasksContainer}>
+              <Text style={styles.noFilteredTasksText}>
+                Nenhuma tarefa encontrada com os filtros selecionados.
+              </Text>
+              <Pressable style={styles.clearFiltersButton} onPress={clearFilters}>
+                <Text style={styles.clearFiltersButtonText}>LIMPAR FILTROS</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.emptyStateWrapper}>
+              <EmptyStateComponent />
+              <Pressable
+                onPress={openCreateModal}
+                style={[styles.createButton, styles.createButtonEmpty]}>
+                <Text style={styles.createButtonText}>Criar Tarefa</Text>
+              </Pressable>
+            </View>
+          )
         ) : hasTasks && userId ? (
           <FlatList
             data={activeTasks}
@@ -511,7 +594,7 @@ const HomeScreen = () => {
         <View style={styles.bottomButtonContainer}>
           {hasTasks && (
             <Pressable onPress={openCreateModal} style={styles.createButton}>
-              <Text style={styles.createButtonText}>Criar Tarefa</Text>
+              <Text style={styles.createButtonText}>CRIAR TAREFA</Text>
             </Pressable>
           )}
         </View>
@@ -521,6 +604,13 @@ const HomeScreen = () => {
         isVisible={isModalVisible}
         onClose={closeCreateModal}
         onSave={handleTaskSaved}
+      />
+
+      <FilterModal
+        isVisible={isFilterModalVisible}
+        onClose={closeFilterModal}
+        onApplyFilters={handleApplyFilters}
+        availableTags={availableTags}
       />
     </View>
   );
