@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert, Animated} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert, Animated, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import Button from '../../components/Button';
@@ -10,6 +10,7 @@ import {useTheme} from '../../theme/ThemeContext';
 import {Theme} from '../../theme/Theme';
 import BackMenu from '../../components/BackButtom';
 import { calculateProgressBarWidth } from '../../utils/AnimationUtils';
+
 
 const avatars = [
   {id: 1, source: require('../../assets/avatarr1.jpg')},
@@ -113,27 +114,26 @@ useEffect(() => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
-
-      <View style={styles.top}>
-          <BackMenu text="EDIÇÂO DE PERFIL" />
-      </View>
-      <View style={styles.progressBarContainer}>
-          <View style={styles.progressBarBackground}>
-            <Animated.View
-              style={[
-                styles.progressBarFill,
-                { width: widthInterpolation },
-              ]}
-                        />
-          </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.top}>
+            <BackMenu text="EDIÇÂO DE PERFIL" />
         </View>
-        
-      <View style={styles.container}>
-        <Text style={styles.title}>ATUALIZE SEU AVATAR</Text>
-        <Text style={styles.subtitle}>(Escolha somente um)</Text>
-        <View style={styles.avatarContainer}>
-          {avatars.map(avatar => (
-            <TouchableOpacity
+        <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarBackground}>
+              <Animated.View
+                style={[
+                  styles.progressBarFill,
+                  { width: widthInterpolation },
+                ]}
+                />
+            </View>
+          </View>
+        <View style={styles.container}>
+          <Text style={styles.title}>ATUALIZE SEU AVATAR</Text>
+          <Text style={styles.subtitle}>(Escolha somente um)</Text>
+          <View style={styles.avatarContainer}>
+            {avatars.map(avatar => (
+              <TouchableOpacity
               key={avatar.id}
               style={[
                 styles.avatarButton,
@@ -141,26 +141,27 @@ useEffect(() => {
               ]}
               onPress={() => handleSelectAvatar(avatar.id)}
               activeOpacity={0.7}>
-              <Image
-                source={avatar.source}
-                style={[
-                  styles.avatarImage,
-                  selectedAvatarId !== null &&
+                <Image
+                  source={avatar.source}
+                  style={[
+                    styles.avatarImage,
+                    selectedAvatarId !== null &&
                     selectedAvatarId !== avatar.id &&
                     styles.opaqueAvatar,
-                ]}
-                resizeMode="cover"
-              />
-            </TouchableOpacity>
-          ))}
+                  ]}
+                  resizeMode="cover"
+                  />
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Button
+            title={loading ? '' : 'CONFIRMAR ATUALIZAÇÃO'}
+            onPress={handleConfirmSelection}
+            loading={loading}
+            disabled={loading}
+            />
         </View>
-        <Button
-          title={loading ? '' : 'CONFIRMAR ATUALIZAÇÃO'}
-          onPress={handleConfirmSelection}
-          loading={loading}
-          disabled={loading}
-        />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -236,6 +237,10 @@ const getStyles = (theme: Theme) =>
     },
     top:{
      paddingTop:20,
+    },
+    scrollContent: {
+      flexGrow: 1, // Permite que o conteúdo ocupe o espaço necessário
+      justifyContent: 'center', // Centraliza o conteúdo se não houver rolagem
     },
   });
 
