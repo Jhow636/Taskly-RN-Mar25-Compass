@@ -23,13 +23,15 @@ import {
 import {AuthStackParamList} from '../navigation/types';
 import {useAuth} from '../context/AuthContext';
 import {UserSignupData} from './SignupScreen';
+import {useTheme} from '../theme/ThemeContext';
+import {Theme} from '../theme/Theme';
 
 const avatars = [
-  {id: 1, source: require('../assets/avatarr1.png')},
-  {id: 2, source: require('../assets/avatarr2.png')},
-  {id: 3, source: require('../assets/avatarr3.png')},
-  {id: 4, source: require('../assets/avatarr4.png')},
-  {id: 5, source: require('../assets/avatarr5.png')},
+  {id: 1, source: require('../assets/avatarr1.jpg')},
+  {id: 2, source: require('../assets/avatarr2.jpg')},
+  {id: 3, source: require('../assets/avatarr3.jpg')},
+  {id: 4, source: require('../assets/avatarr4.jpg')},
+  {id: 5, source: require('../assets/avatarr5.jpg')},
 ];
 
 interface AvatarSelectionScreenParams {
@@ -40,6 +42,8 @@ interface AvatarSelectionScreenParams {
 const AvatarSelectionScreen: React.FC = () => {
   const route = useRoute<RouteProp<AuthStackParamList, 'AvatarSelection'>>();
   const auth = useAuth();
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
 
   const {userData, password} = route.params as AvatarSelectionScreenParams;
 
@@ -60,16 +64,13 @@ const AvatarSelectionScreen: React.FC = () => {
     try {
       const avatarApiId = `avatar_${selectedAvatarId}`;
 
-      // Passo 1: Registrar o usuário (sem o avatar ainda)
       await registerUser(userData.email, password, userData.fullName, userData.phone);
 
       Alert.alert('Sucesso', 'Conta criada! Configurando perfil e fazendo login...');
 
-      // Passo 2: Fazer login para obter id_token e refresh_token
       const loginResponse = await loginUser(userData.email, password);
       const {id_token: newIdToken, refresh_token: newRefreshToken} = loginResponse;
 
-      // Passo 3: Atualizar o perfil com o avatar usando o token obtido no login
       const previousAuthHeader = apiClient.defaults.headers.common.Authorization;
       apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
 
@@ -93,7 +94,6 @@ const AvatarSelectionScreen: React.FC = () => {
         }
       }
 
-      // Passo 4: Fazer login no AuthContext para estabelecer a sessão no app
       auth.login(newIdToken, newRefreshToken);
     } catch (error: any) {
       console.error('Erro durante o processo de cadastro e login:', error);
@@ -114,7 +114,7 @@ const AvatarSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
       <View style={styles.container}>
         <Text style={styles.title}>SELECIONE SEU AVATAR</Text>
         <Text style={styles.subtitle}>(Escolha somente um)</Text>
@@ -146,52 +146,63 @@ const AvatarSelectionScreen: React.FC = () => {
           onPress={handleConfirmSelection}
           loading={loading}
           disabled={loading || selectedAvatarId === null}>
-          {loading && <ActivityIndicator color="#FFFFFF" />}
+          {loading && <ActivityIndicator color={theme.colors.primary} />}
         </Button>
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {flex: 1, backgroundColor: '#FFFFFF'},
-  container: {
-    flex: 1,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  avatarContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 40,
-  },
-  avatarButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    margin: 10,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedAvatarButton: {borderColor: '#6200EE'},
-  avatarImage: {width: '100%', height: '100%'},
-  opaqueAvatar: {opacity: 0.4},
-});
+const getStyles = (theme: Theme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    container: {
+      flex: 1,
+      padding: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      ...theme.typography.bigTitle,
+      color: theme.colors.mainText,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...theme.typography.regular,
+      color: theme.colors.secondaryText,
+      marginBottom: 32,
+      textAlign: 'center',
+    },
+    avatarContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      marginBottom: 40,
+    },
+    avatarButton: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      margin: 10,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    selectedAvatarButton: {
+      borderColor: theme.colors.primary,
+    },
+    avatarImage: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 40,
+    },
+    opaqueAvatar: {
+      opacity: 0.4,
+    },
+  });
 
 export default AvatarSelectionScreen;

@@ -1,10 +1,8 @@
 import React, {useState, useCallback} from 'react';
-import {View, ScrollView, ActivityIndicator, Alert, Text, TouchableOpacity} from 'react-native';
+import {View, ScrollView, ActivityIndicator, Alert, Text} from 'react-native';
 import {RouteProp, useRoute, useNavigation, useFocusEffect} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faPlusSquare, faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 
 import {MainStackParamList} from '../../navigation/types';
 import {Task as TaskModel, Subtask} from '../../data/models/Task';
@@ -36,6 +34,7 @@ const TaskDetailScreen = () => {
 
   const [task, setTask] = useState<TaskModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const reloadTaskFromLocal = useCallback(() => {
     if (userId && route.params.task?.id) {
@@ -59,25 +58,18 @@ const TaskDetailScreen = () => {
       setIsLoading(true);
       const taskIdFromParams = route.params.task?.id;
       if (taskIdFromParams && userId) {
-        console.log(
-          `TaskDetailScreen focused, attempting to load task ${taskIdFromParams} from local storage.`,
-        );
         const refreshedTask = getLocalTaskById(taskIdFromParams, userId);
         if (refreshedTask) {
           setTask(refreshedTask);
           navigation.setOptions({title: refreshedTask.title});
         } else {
           setTask(null);
-          console.warn(
-            `Task ${taskIdFromParams} not found in local storage. It might have been deleted.`,
-          );
         }
       } else if (route.params.task && !userId) {
         setTask(route.params.task);
         navigation.setOptions({title: route.params.task.title});
       } else {
         setTask(null);
-        console.warn('TaskDetailScreen: No task ID in route params or no user ID.');
       }
       setIsLoading(false);
     }, [userId, route.params.task, navigation]),
@@ -226,11 +218,13 @@ const TaskDetailScreen = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isSyncing) {
     return (
       <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={{marginTop: 10, color: theme.colors.mainText}}>Carregando tarefa...</Text>
+        <Text style={{marginTop: 10, color: theme.colors.mainText}}>
+          {isSyncing ? 'Sincronizando tarefa...' : 'Carregando tarefa...'}
+        </Text>
       </View>
     );
   }

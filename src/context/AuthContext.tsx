@@ -6,7 +6,15 @@ import {
   getRefreshToken as getStoredRefreshToken,
   clearAuthTokens,
 } from '../storage/userStorage';
-import {apiClient, initializeApiClient} from '../services/api';
+import {apiClient, initializeApiClient, getProfile} from '../services/api';
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  name: string;
+  picture: string;
+  phone_number?: string;
+}
 
 interface DecodedToken {
   user_id: string;
@@ -16,12 +24,15 @@ interface DecodedToken {
 interface AuthContextType {
   idToken: string | null;
   userId: string | null;
+  userProfile: UserProfile | null;
   isLoading: boolean;
   login: (idToken: string, refreshToken: string) => void;
   logout: () => void;
-  getRefreshToken: () => string | null; // Adicionado para o interceptor da API
-  refreshTokensAndUpdateClient: (newIdToken: string, newRefreshToken: string) => void; // Adicionado
-  registerSyncFunction: (syncFn: () => Promise<void>) => void; // Novo
+  deleteUserAccount: () => Promise<void>;
+  getRefreshToken: () => string | null;
+  refreshTokensAndUpdateClient: (newIdToken: string, newRefreshToken: string) => void;
+  refreshUserProfile: () => Promise<void>;
+  registerSyncFunction: (syncFn: () => Promise<void>) => void;
   triggerSync: () => Promise<void>;
 }
 
@@ -31,6 +42,7 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [refreshTokenState, setRefreshTokenState] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [syncFunction, setSyncFunction] = useState<(() => Promise<void>) | null>(null);
 
@@ -44,11 +56,28 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
     }
   };
 
-  const performLogout = useCallback(async () => {
-    console.log('AuthProvider: Logging out.');
+  const fetchUserProfile = useCallback(async () => {
+    if (!apiClient.defaults.headers.common.Authorization) {
+      console.log('AuthProvider: Cannot fetch profile, no auth token set.');
+      return;
+    }
+    console.log('AuthProvider: Fetching user profile.');
     try {
-      // Adicionar chamada à API de logout se existir
-      // await apiClient.post('/auth/logout'); // Exemplo
+      const profileData = await getProfile();
+      setUserProfile(profileData);
+      console.log('AuthProvider: User profile fetched and set:', profileData);
+    } catch (error) {
+      console.error('AuthProvider: Failed to fetch user profile:', error);
+    }
+  }, []);
+
+  const performLogout = useCallback(async (isAccountDeletion: boolean = false) => {
+    console.log(`AuthProvider: Performing logout. Is account deletion: ${isAccountDeletion}`);
+    try {
+      if (!isAccountDeletion) {
+        // await apiClient.post('/auth/logout'); // Exemplo
+        console.log('AuthProvider: API logout call skipped or not implemented for regular logout.');
+      }
     } catch (error) {
       console.error('AuthProvider: Error during API logout call:', error);
     } finally {
@@ -56,27 +85,45 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
       setIdToken(null);
       setRefreshTokenState(null);
       setUserId(null);
-      // Assegurar que o cabeçalho de autorização seja removido do cliente API
+      setUserProfile(null);
       if (apiClient.defaults.headers.common.Authorization) {
         delete apiClient.defaults.headers.common.Authorization;
       }
-      console.log('AuthProvider: User logged out, tokens cleared.');
+      console.log('AuthProvider: User logged out, tokens and profile cleared.');
     }
   }, []);
 
   const refreshTokensAndUpdateClient = useCallback(
-    (newIdToken: string, newRefreshToken: string) => {
+    async (newIdToken: string, newRefreshToken: string) => {
       console.log('AuthProvider (via APIClient): Refreshing tokens.');
-      saveAuthTokens(newIdToken, newRefreshToken); // Salva no MMKV
+      saveAuthTokens(newIdToken, newRefreshToken);
       setIdToken(newIdToken);
       setRefreshTokenState(newRefreshToken);
       const currentUserId = getUserIdFromToken(newIdToken);
       setUserId(currentUserId);
       apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
       console.log('AuthProvider (via APIClient): Tokens refreshed. UserID:', currentUserId);
+      await fetchUserProfile();
     },
-    [],
+    [fetchUserProfile],
   );
+
+  const deleteUserAccount = async () => {
+    console.log('AuthProvider: Attempting to delete user account.');
+    if (!idToken) {
+      console.error('AuthProvider: No user logged in to delete.');
+      throw new Error('Nenhum usuário logado para excluir.');
+    }
+    try {
+      await apiClient.delete('/profile/delete-account');
+      console.log('AuthProvider: API call to delete account successful.');
+      await performLogout(true);
+      console.log('AuthProvider: Account deleted successfully and user logged out.');
+    } catch (error) {
+      console.error('AuthProvider: Error deleting user account:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     console.log('AuthProvider: Initializing API client and checking token.');
@@ -98,26 +145,27 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
             setUserId(currentUserId);
             apiClient.defaults.headers.common.Authorization = `Bearer ${storedId}`;
             console.log('AuthProvider: Stored tokens loaded. UserID:', currentUserId);
+            await fetchUserProfile();
           } else {
-            console.log('AuthProvider: Stored ID token expired. Attempting refresh.');
+            console.log('AuthProvider: Stored ID token expired. Logging out.');
             performLogout();
           }
         } else {
           console.log('AuthProvider: No stored tokens found.');
+          setUserProfile(null);
         }
       } catch (error) {
         console.error('AuthProvider: Error checking stored token:', error);
         performLogout();
       } finally {
         setIsLoading(false);
-        console.log('AuthProvider: Token check finished. isLoading:', isLoading);
       }
     };
 
     checkStoredToken();
-  }, [performLogout, refreshTokenState, refreshTokensAndUpdateClient, isLoading]);
+  }, [performLogout, refreshTokenState, refreshTokensAndUpdateClient, fetchUserProfile]);
 
-  const login = (newIdToken: string, newRefreshToken: string) => {
+  const login = async (newIdToken: string, newRefreshToken: string) => {
     console.log('AuthProvider: login called.');
     saveAuthTokens(newIdToken, newRefreshToken);
     setIdToken(newIdToken);
@@ -126,6 +174,7 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
     setUserId(currentUserId);
     apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
     console.log('AuthProvider: User logged in. UserID set to:', currentUserId);
+    await fetchUserProfile();
   };
 
   const logout = () => {
@@ -135,6 +184,11 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
   const getRefreshToken = useCallback(() => {
     return refreshTokenState;
   }, [refreshTokenState]);
+
+  const refreshUserProfile = useCallback(async () => {
+    console.log('AuthProvider: Refresh user profile explicitly called.');
+    await fetchUserProfile();
+  }, [fetchUserProfile]);
 
   const registerSyncFunction = useCallback((syncFn: () => Promise<void>) => {
     console.log('AuthProvider: Sync function registered.');
@@ -151,9 +205,9 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
   }, [syncFunction]);
 
   console.log(
-    `AuthProvider: Rendering children. UserID: ${userId} idToken: ${
-      idToken ? 'present' : 'absent'
-    }`,
+    `AuthProvider: Rendering. UserID: ${userId}, Profile: ${
+      userProfile ? userProfile.name : 'none'
+    }, Token: ${idToken ? 'present' : 'absent'}`,
   );
 
   return (
@@ -161,11 +215,14 @@ export const AuthProvider = ({children}: {children: ReactNode}) => {
       value={{
         idToken,
         userId,
+        userProfile,
         isLoading,
         login,
         logout,
+        deleteUserAccount,
         getRefreshToken,
         refreshTokensAndUpdateClient,
+        refreshUserProfile,
         registerSyncFunction,
         triggerSync,
       }}>

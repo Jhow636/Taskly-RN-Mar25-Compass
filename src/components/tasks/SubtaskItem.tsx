@@ -1,14 +1,13 @@
 import React, {useState, useRef} from 'react';
-import {View, Text, TouchableOpacity, Alert} from 'react-native';
+import {View, Text, TouchableOpacity, Alert, Image} from 'react-native';
 import {Swipeable} from 'react-native-gesture-handler';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import {Subtask} from '../../data/models/Task';
 import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
 import Icon from '@react-native-vector-icons/feather';
 import AddItemInput from '../inputs/AddItemInput';
-import {faCheckCircle, faEdit} from '@fortawesome/free-solid-svg-icons';
+import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
 import {useTheme} from '../../theme/ThemeContext';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
 interface SubtaskItemProps {
   subtask: Subtask;
@@ -90,7 +89,7 @@ const SubtaskItem = ({
           {subtask.text}
         </Text>
         <TouchableOpacity onPress={handleEditPress} style={styles.subtaskEditIcon}>
-          <FontAwesomeIcon icon={faEdit} size={18} color={theme.colors.secondaryText} />
+          <Image source={require('../../assets/img/editIconLight.png')} style={styles.icon} />
         </TouchableOpacity>
       </View>
     </Swipeable>

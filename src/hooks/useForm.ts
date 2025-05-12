@@ -21,6 +21,7 @@ interface UseFormReturn<T> {
   validateAllFields: () => boolean;
   resetForm: () => void;
   getValues: () => T;
+  setValues: (newValues: Partial<T>) => void;
 }
 
 const useForm = <T extends Record<string, any>>(
@@ -137,6 +138,25 @@ const useForm = <T extends Record<string, any>>(
     return values;
   }, [formState]);
 
+  const setValues = useCallback(
+    (newValues: Partial<T>) => {
+      setFormState(prevFormState => {
+        const updatedState = {...prevFormState};
+        for (const key in newValues) {
+          if (Object.prototype.hasOwnProperty.call(newValues, key) && key in updatedState) {
+            const fieldKey = key as keyof T;
+            updatedState[fieldKey] = {
+              ...updatedState[fieldKey],
+              value: newValues[fieldKey] as T[keyof T],
+            };
+          }
+        }
+        return updatedState;
+      });
+    },
+    [],
+  );
+
   return {
     formState,
     handleChange,
@@ -145,6 +165,7 @@ const useForm = <T extends Record<string, any>>(
     validateAllFields,
     resetForm,
     getValues,
+    setValues,
   };
 };
 
