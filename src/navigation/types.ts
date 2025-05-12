@@ -20,7 +20,7 @@ export type MainStackParamList = {
   Menu: undefined;
   Terms: undefined;
   Preferencies: undefined;
-  AvatarUpdate: undefined;
-  UserEdit: undefined;
+  AvatarUpdate:{avatarUpdated:boolean};
+  UserEdit:{ fullName: string};
   // Adicione outras telas principais aqui
 };
