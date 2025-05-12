@@ -59,7 +59,7 @@ const AvatarUpdate: React.FC = () => {
 
       await updateFullProfile({
         name: newName,
-        phone: newPhone,
+        phone_number: newPhone.replace(/\D/g, ''),
         picture: pictureToUpdate,
       });
 
