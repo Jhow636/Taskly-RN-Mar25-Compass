@@ -121,6 +121,7 @@ const LoginScreen = () => {
       <TextInput
         style={styles.input}
         placeholder="Digite seu e-mail"
+        placeholderTextColor={theme.colors.mainText}
         value={email}
         onChangeText={text => {
           setEmail(text);
@@ -142,6 +143,7 @@ const LoginScreen = () => {
       <TextInput
         style={styles.input}
         placeholder="Digite sua senha"
+        placeholderTextColor={theme.colors.mainText}
         value={password}
         onChangeText={text => {
           setPassword(text);

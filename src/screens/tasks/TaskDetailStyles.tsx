@@ -19,7 +19,7 @@ export const useTaskDetailStyles = () => {
         case 'MÉDIA':
         default:
           return {
-            backgroundColor: theme.colors.secondaryAccent ,
+            backgroundColor: theme.colors.secondaryAccent,
           };
       }
     };
@@ -52,40 +52,40 @@ export const useTaskDetailStyles = () => {
         backgroundColor: theme.colors.secondaryBg,
         borderRadius: 12,
         padding: 16,
+        width: '98%',
+        alignSelf: 'center',
         marginBottom: 24,
         shadowColor: '#000',
         shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 4,
       },
       cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
-        borderBottomWidth: 1,
         borderBottomColor: theme.colors.primaryLight,
-        paddingBottom: 10,
       },
       sectionTitle: {
+        ...theme.typography.mediumTitle,
+        color: theme.colors.secondaryText,
+      },
+      title: {
         ...theme.typography.subtitle,
         color: theme.colors.mainText,
-        fontWeight: 'bold',
+        marginBottom: 8,
+        marginTop: -4,
       },
       editIcon: {
-        padding: 4,
+        tintColor: '#B58B46',
+        width: 24,
+        height: 24,
       },
       icon: {
         width: 24,
         height: 24,
         tintColor: theme.colors.mainText,
-      },
-      label: {
-        ...theme.typography.caption,
-        color: theme.colors.secondaryText,
-        marginTop: 12,
-        marginBottom: 4,
       },
       value: {
         ...theme.typography.regular,
@@ -94,6 +94,7 @@ export const useTaskDetailStyles = () => {
       },
       tagsList: {
         marginBottom: 8,
+        marginTop: 4,
       },
       tag: {
         backgroundColor: theme.colors.primaryLight,
@@ -104,9 +105,8 @@ export const useTaskDetailStyles = () => {
         alignSelf: 'flex-start',
       },
       tagText: {
-        ...theme.typography.caption,
-        color: theme.colors.primary,
-        fontWeight: '600',
+        ...theme.typography.regular,
+        color: theme.colors.mainText,
       },
       priorityBadge: {
         borderRadius: 6,
@@ -121,7 +121,7 @@ export const useTaskDetailStyles = () => {
       priorityText: {
         ...theme.typography.regular,
         textTransform: 'uppercase',
-        color: "#fff"
+        color: theme.colors.secondaryBg,
       },
       button: {
         paddingVertical: 4,
@@ -147,14 +147,16 @@ export const useTaskDetailStyles = () => {
         textTransform: 'uppercase',
       },
       subtasksSection: {
-        marginTop: 16,
+        marginTop: 24,
       },
-      noSubtasksText: {
+      addNewSubtaskButtonText: {
         ...theme.typography.regular,
-        color: theme.colors.secondaryText,
+        color: theme.colors.secondaryBg,
+        textTransform: 'uppercase',
         textAlign: 'center',
+      },
+      addSingleSubtaskInputSection: {
         marginTop: 16,
-        marginBottom: 16,
       },
       subtaskItem: {
         flexDirection: 'row',
@@ -164,15 +166,14 @@ export const useTaskDetailStyles = () => {
         paddingHorizontal: 16,
         borderRadius: 8,
         marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 1},
-        shadowOpacity: 0.08,
-        shadowRadius: 2,
-        elevation: 2,
+      },
+      subtaskItemEditing: {
+        paddingVertical: 4,
       },
       subtaskCheckbox: {
-        marginRight: 12,
-        borderRadius: 4,
+        marginRight: 10,
+        width: 20,
+        borderRadius: 2,
       },
       subtaskText: {
         ...theme.typography.regular,
@@ -182,6 +183,7 @@ export const useTaskDetailStyles = () => {
       subtaskTextCompleted: {
         textDecorationLine: 'line-through',
         color: theme.colors.secondaryText,
+        marginLeft: 10,
       },
       subtaskEditIcon: {
         marginLeft: 10,
@@ -208,19 +210,52 @@ export const useTaskDetailStyles = () => {
         backgroundColor: theme.colors.primary,
         paddingVertical: 6,
         width: '100%',
+        borderRadius: 8,
+        marginTop: 30,
+      },
+      // Estilo para o container dos múltiplos inputs de subtarefa
+      addMultipleSubtasksSection: {
+        // Renomeado de addSingleSubtaskInputSection ou novo
+        marginTop: 10, // Espaço acima da lista de inputs pendentes
+      },
+      pendingSubtaskInputContainer: {
+        // Container para cada linha de input pendente (input + botão de remover)
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12, // Espaço entre cada input pendente
+      },
+      addItemInputWrapper: {
+        // Wrapper para o AddItemInput para permitir que ele ocupe espaço flexível
+        flex: 1,
+      },
+      removePendingInputButton: {
+        // Botão para remover um input pendente específico
+        paddingLeft: 10, // Espaço à esquerda do ícone de remover
+        paddingVertical: 12, // Para alinhar verticalmente com o botão interno do AddItemInput
+      },
+
+      // Botão principal para adicionar um novo campo de input
+      addNewSubtaskButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 8,
+        marginTop: 16, // Espaçamento acima do botão, especialmente se houver inputs pendentes
+      },
+      addNewSubtaskButtonProminent: {
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: 16,
+      },
+      addNewSubtaskButtonTextProminent: {
+        color: theme.colors.secondaryBg,
       },
       deleteAction: {
-        backgroundColor: theme.colors.error,
         justifyContent: 'center',
         alignItems: 'center',
         width: 75,
         borderTopRightRadius: 8,
         borderBottomRightRadius: 8,
-      },
-      deleteIcon: {
-        width: 24,
-        height: 24,
-        tintColor: theme.colors.mainText,
       },
     });
   }, [theme]);

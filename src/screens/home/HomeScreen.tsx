@@ -3,11 +3,13 @@ import {View, Text, FlatList, Pressable, ActivityIndicator, Alert} from 'react-n
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {MainStackParamList} from '../../navigation/types';
-import {Task as TaskModel} from '../../data/models/Task';
+import {Task as TaskModel, Priority} from '../../data/models/Task';
 import {
   getAllTasks as getAllLocalTasks,
   setTaskCompletion as setLocalTaskCompletion,
   markTaskAsSyncedAndRemove,
+  saveTaskFromApi,
+  replaceLocalTaskWithApiTask,
 } from '../../storage/taskStorage';
 import {
   getTasks as getApiTasks,
@@ -85,7 +87,7 @@ const HomeScreen: React.FC = () => {
   const styles = useHomeStyles();
   const {theme} = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const {userId, idToken} = useAuth();
+  const {userId, idToken, registerSyncFunction} = useAuth();
   const [tasks, setTasks] = useState<TaskModel[]>([]);
   const [displayedTasks, setDisplayedTasks] = useState<TaskModel[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -147,6 +149,7 @@ const HomeScreen: React.FC = () => {
       }
 
       if (isSyncing && !isManualRefresh) {
+        console.log('HomeScreen: Sync already in progress, manual refresh not forced. Skipping.');
         return;
       }
 
@@ -160,27 +163,41 @@ const HomeScreen: React.FC = () => {
       let localSyncOperations = 0;
 
       for (const localTask of localTasksToSync) {
+        const isShellForStatusUpdate = localTask.createdAt === new Date(0).toISOString();
+        const payload = prepareTaskPayloadForApi(localTask, isShellForStatusUpdate);
+        const isTrulyNewForApi = localTask._isNewForApi === true;
+
         try {
           if (localTask.isDeleted) {
             console.log(`Sync: Deleting task ${localTask.id} from API.`);
             await deleteApiTask(localTask.id);
             markTaskAsSyncedAndRemove(localTask.id, userId);
             localSyncOperations++;
-          } else {
-            const isLikelyNewTask = localTask.id.includes('-');
-            const payload = prepareTaskPayloadForApi(localTask);
-
-            if (isLikelyNewTask) {
-              console.log(`Sync: Creating new task "${localTask.title}" on API.`);
-              await createApiTask(payload);
-              markTaskAsSyncedAndRemove(localTask.id, userId);
-              localSyncOperations++;
+          } else if (isTrulyNewForApi && !isShellForStatusUpdate) {
+            console.log(
+              `Sync: Creating new task "${localTask.title}" on API (identified by _isNewForApi).`,
+            );
+            const createdTaskFromApi = await createApiTask(payload);
+            if (createdTaskFromApi && createdTaskFromApi.id) {
+              replaceLocalTaskWithApiTask(localTask.id, createdTaskFromApi, userId);
+              console.log(
+                `Sync: Replaced local task ${localTask.id} with API task ${createdTaskFromApi.id}`,
+              );
             } else {
-              console.log(`Sync: Updating task ${localTask.id} on API.`);
-              await updateApiTask(localTask.id, payload);
-              markTaskAsSyncedAndRemove(localTask.id, userId);
-              localSyncOperations++;
+              console.error(
+                'Sync: createApiTask did not return a valid task with an ID. Task remains local with _isNewForApi=true.',
+              );
             }
+            localSyncOperations++;
+          } else {
+            console.log(
+              `Sync: Updating task ${localTask.id} (Title: "${localTask.title}") on API. Is shell: ${isShellForStatusUpdate}. Is new flag: ${isTrulyNewForApi}`,
+            );
+            await updateApiTask(localTask.id, payload);
+            const taskAfterUpdate = {...localTask, needsSync: false};
+            delete taskAfterUpdate._isNewForApi;
+            saveTaskFromApi(taskAfterUpdate, userId);
+            localSyncOperations++;
           }
         } catch (error) {
           console.error(
@@ -188,19 +205,20 @@ const HomeScreen: React.FC = () => {
             error,
           );
           if (error instanceof CustomApiError && error.status === 404 && !localTask.isDeleted) {
-            try {
-              console.log(
-                `Sync: Update failed (404), attempting to CREATE task ${localTask.title} as fallback.`,
+            if (isTrulyNewForApi) {
+              console.warn(
+                `Sync: API operation for new task ${localTask.id} resulted in 404. Task remains local. Error: ${error.message}`,
               );
-              const createPayload = prepareTaskPayloadForApi(localTask);
-              await createApiTask(createPayload);
+            } else if (!isShellForStatusUpdate) {
+              console.warn(
+                `Sync: Update for existing task ${localTask.id} failed (404). Task likely deleted on server. Removing local.`,
+              );
               markTaskAsSyncedAndRemove(localTask.id, userId);
-              localSyncOperations++;
-            } catch (createError) {
-              console.error(
-                `Sync: Fallback CREATE failed for task ${localTask.title}:`,
-                createError,
+            } else {
+              console.warn(
+                `Sync: Shell task ${localTask.id} not found (404). Removing local shell.`,
               );
+              markTaskAsSyncedAndRemove(localTask.id, userId);
             }
           }
         }
@@ -214,11 +232,13 @@ const HomeScreen: React.FC = () => {
           id: apiTask.id,
           title: apiTask.title,
           description: apiTask.description || '',
-          isCompleted: apiTask.done,
+          isCompleted: apiTask.done, // 'done' da API para 'isCompleted' local
           createdAt: apiTask.createdAt || new Date().toISOString(),
           updatedAt: apiTask.updatedAt || new Date().toISOString(),
-          dueDate: apiTask.dueDate || '',
-          priority: apiTask.priority || 'MÉDIA',
+          // Mapear deadline da API ("dd/mm/yyyy") para dueDate local (ISO string)
+          dueDate: parseDdMmYyyyToISO(apiTask.deadline),
+          // Mapear priority da API (1,2,3) para priority local ('ALTA', 'MÉDIA', 'BAIXA')
+          priority: mapApiPriorityToLocal(apiTask.priority),
           tags: apiTask.tags || [],
           subtasks: (apiTask.subtasks || []).map((st: any) => ({
             id: st.id || generateUniqueId(),
@@ -257,7 +277,7 @@ const HomeScreen: React.FC = () => {
           setTasks(remainingLocalTasks);
           setDisplayedTasks(remainingLocalTasks);
           console.log(
-            `Sync: API fetch failed. Displaying ${remainingLocalTasks.length} remaining local tasks.`,
+            `Sync: API fetch failed. Displaying ${localFallbackTasks.length} local tasks as fallback.`,
           );
         }
       } finally {
@@ -271,6 +291,10 @@ const HomeScreen: React.FC = () => {
     },
     [userId, idToken, isSyncing, initialLoadDone, activeFilters, applyFilters],
   );
+
+  useEffect(() => {
+    registerSyncFunction(() => syncLocalTasksWithApi(false));
+  }, [registerSyncFunction, syncLocalTasksWithApi]);
 
   useEffect(() => {
     if (userId && idToken && !initialLoadDone) {
@@ -329,11 +353,12 @@ const HomeScreen: React.FC = () => {
     const taskIndex = tasks.findIndex(t => t.id === taskId);
     if (taskIndex > -1) {
       const updatedTasks = [...tasks];
-      const taskToToggle = updatedTasks[taskIndex];
+      const taskToToggle = {...updatedTasks[taskIndex]};
       taskToToggle.isCompleted = !taskToToggle.isCompleted;
       if (taskToToggle.isCompleted) {
         taskToToggle.subtasks.forEach(sub => (sub.isCompleted = true));
       }
+      updatedTasks[taskIndex] = taskToToggle;
       setTasks(updatedTasks);
 
       // Update displayed tasks as well
@@ -352,7 +377,7 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  if (isLoading && !initialLoadDone && tasks.length === 0) {
+  if (isLoading && !initialLoadDone && tasks.filter(t => !t.isDeleted).length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -365,7 +390,7 @@ const HomeScreen: React.FC = () => {
         <Header />
         <View style={styles.contentArea}>
           <View style={styles.loadingContainer}>
-            <Text>Por favor, faça login para ver suas tarefas.</Text>
+            <Text style={styles.tagText}>Por favor, faça login para ver suas tarefas.</Text>
           </View>
         </View>
       </View>
@@ -444,7 +469,9 @@ const HomeScreen: React.FC = () => {
         ) : (
           <View style={styles.loadingContainer}>
             {isLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
-            {!isLoading && !idToken && <Text>Por favor, faça login para ver suas tarefas.</Text>}
+            {!isLoading && !idToken && (
+              <Text style={styles.tagText}>Por favor, faça login para ver suas tarefas.</Text>
+            )}
           </View>
         )}
       </View>
@@ -456,7 +483,6 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.createButtonText}>CRIAR TAREFA</Text>
             </Pressable>
           )}
-          <LogoutButton />
         </View>
       )}
 

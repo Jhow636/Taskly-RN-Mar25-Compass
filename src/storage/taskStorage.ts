@@ -35,10 +35,17 @@ export const saveTask = (task: Task, userId: string): boolean => {
   try {
     const taskKey = getUserTaskKey(userId, task.id);
     task.updatedAt = new Date().toISOString();
+    console.log(
+      `taskStorage.saveTask: Salvando tarefa ${task.id} para userId ${userId}. needsSync ANTES de forçar: ${task.needsSync}`,
+    );
     // Sempre marcar como needsSync se não for uma operação vinda da API
     // A flag isDeleted já é tratada por quem chama saveTask (ex: deleteTask)
     // Se a tarefa está sendo explicitamente marcada como deletada, ela ainda precisa de sync para o delete.
     task.needsSync = true;
+    console.log(
+      `taskStorage.saveTask: Tarefa ${task.id} marcada com needsSync: ${task.needsSync}. Conteúdo:`,
+      JSON.stringify(task),
+    );
     const taskJson = JSON.stringify(task);
     storage.set(taskKey, taskJson);
     console.log(`Tarefa ${task.id} (userId: ${userId}) salva e marcada para sincronização.`);
@@ -51,6 +58,8 @@ export const saveTask = (task: Task, userId: string): boolean => {
 
 /**
  * Busca uma tarefa no MMKV pelo seu ID para um usuário específico.
+ * Esta função DEVE continuar retornando null se a tarefa estiver marcada como isDeleted,
+ * pois é usada para carregar uma tarefa individual para visualização/edição.
  * @param taskId O ID da tarefa a ser buscada.
  * @param userId O ID do usuário proprietário da tarefa.
  * @returns O objeto Task se encontrado, ou null caso contrário.
@@ -69,13 +78,79 @@ export const getTaskById = (taskId: string, userId: string): Task | null => {
 
     if (taskJson) {
       const task: Task = JSON.parse(taskJson);
-      return task.isDeleted ? null : task;
+      // Se a tarefa está marcada como deletada, não a retorne como uma tarefa "ativa"
+      if (task.isDeleted) {
+        console.log(
+          `taskStorage.getTaskById: Tarefa ${taskId} encontrada, mas está marcada como isDeleted. Retornando null.`,
+        );
+        return null;
+      }
+      return task;
     } else {
       return null;
     }
   } catch (error) {
     console.error(`Erro ao buscar tarefa ${taskId} para o usuário ${userId}:`, error);
     return null;
+  }
+};
+
+/**
+ * Salva ou atualiza uma tarefa vinda da API no MMKV, garantindo que needsSync seja false.
+ * @param task A tarefa da API.
+ * @param userId O ID do usuário.
+ * @returns true se sucesso, false caso contrário.
+ */
+export const saveTaskFromApi = (task: Task, userId: string): boolean => {
+  if (!userId || !task || !task.id) {
+    console.error('saveTaskFromApi: Dados inválidos.');
+    return false;
+  }
+  try {
+    const taskKey = getUserTaskKey(userId, task.id);
+    // Assegurar que a tarefa da API não seja marcada para nova sincronização
+    const taskToSave = {...task, needsSync: false, isDeleted: false};
+    delete taskToSave._isNewForApi; // Remover a flag ao salvar da API
+    const taskJson = JSON.stringify(taskToSave);
+    storage.set(taskKey, taskJson);
+    return true;
+  } catch (error) {
+    console.error(`Erro ao salvar tarefa ${task.id} da API para usuário ${userId}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Substitui uma tarefa local (com ID temporário) pela tarefa retornada pela API (com ID final).
+ * @param localTaskId O ID da tarefa local a ser removida.
+ * @param apiTask A tarefa completa retornada pela API.
+ * @param userId O ID do usuário.
+ * @returns true se a operação foi bem-sucedida, false caso contrário.
+ */
+export const replaceLocalTaskWithApiTask = (
+  localTaskId: string,
+  apiTask: Task,
+  userId: string,
+): boolean => {
+  if (!userId || !localTaskId || !apiTask || !apiTask.id) {
+    console.error('replaceLocalTaskWithApiTask: Dados inválidos.');
+    return false;
+  }
+  try {
+    const localTaskKey = getUserTaskKey(userId, localTaskId);
+    if (storage.contains(localTaskKey)) {
+      storage.delete(localTaskKey);
+      console.log(`Tarefa local ${localTaskId} removida para substituição pela tarefa da API.`);
+    }
+
+    // Salva a tarefa da API usando saveTaskFromApi, que já lida com needsSync e _isNewForApi
+    return saveTaskFromApi(apiTask, userId);
+  } catch (error) {
+    console.error(
+      `Erro ao substituir tarefa local ${localTaskId} pela tarefa da API ${apiTask.id}:`,
+      error,
+    );
+    return false;
   }
 };
 
@@ -100,16 +175,16 @@ export const getAllTasks = (userId: string): Task[] => {
       if (taskJson) {
         try {
           const task: Task = JSON.parse(taskJson);
-          if (!task.isDeleted) {
-            tasks.push(task);
-          }
+          tasks.push(task);
         } catch (parseError) {
           console.error(`Erro ao parsear dados da tarefa para a chave ${key}:`, parseError);
         }
       }
     });
     tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    console.log(`Encontradas ${tasks.length} tarefas para o usuário ${userId}.`);
+    console.log(
+      `taskStorage.getAllTasks: Encontradas ${tasks.length} tarefas (incluindo marcadas para deleção) para o usuário ${userId}.`,
+    );
     return tasks;
   } catch (error) {
     console.error(`Erro ao buscar todas as tarefas para o usuário ${userId}:`, error);
@@ -129,20 +204,52 @@ export const setTaskCompletion = (
   isCompleted: boolean,
   userId: string,
 ): boolean => {
-  const task = getTaskById(taskId, userId);
+  console.log(
+    `taskStorage.setTaskCompletion: Chamado para taskId: ${taskId}, isCompleted: ${isCompleted}, userId: ${userId}`,
+  );
+  let task = getTaskById(taskId, userId); // Mude para let
+
   if (task) {
-    task.isCompleted = isCompleted;
-    if (isCompleted) {
-      task.subtasks.forEach(sub => {
-        sub.isCompleted = true; // Marcar todas as subtarefas como completas
-      });
-    }
-    // Se !isCompleted, as subtarefas mantêm seu estado individual,
-    // mas a tarefa principal não está completa.
-    // task.needsSync = true; // saveTask cuidará disso
-    return saveTask(task, userId);
+    console.log(
+      `taskStorage.setTaskCompletion: Tarefa ${taskId} encontrada localmente. Estado atual isCompleted: ${task.isCompleted}`,
+    );
+  } else {
+    // Se a tarefa não existe localmente, criamos um "shell" para ela.
+    // A API PUT /tasks/:id deve ser capaz de lidar com isso, atualizando apenas os campos fornecidos.
+    // O mais importante é 'done' (isCompleted). Outros campos são para a estrutura do payload.
+    console.warn(
+      `taskStorage.setTaskCompletion: Tarefa ${taskId} NÃO encontrada localmente para userId ${userId}. Criando shell para sincronização.`,
+    );
+    task = {
+      id: taskId,
+      title: `Task ${taskId}`, // Um título genérico, a API idealmente não o alteraria se não fosse a intenção
+      description: '', // Default
+      isCompleted: isCompleted, // O valor que queremos definir
+      createdAt: new Date(0).toISOString(), // Data antiga para indicar que não é uma nova criação real
+      updatedAt: new Date().toISOString(), // Atualizado agora
+      dueDate: '',
+      priority: 'MÉDIA',
+      tags: [],
+      subtasks: [],
+      needsSync: false, // saveTask vai definir para true
+      isDeleted: false,
+    };
   }
-  return false;
+
+  task.isCompleted = isCompleted;
+  if (isCompleted) {
+    // Se estamos criando um shell, ele não terá subtasks para iterar aqui, o que é ok.
+    // Se a tarefa existia, suas subtarefas serão marcadas.
+    task.subtasks.forEach(sub => {
+      sub.isCompleted = true;
+    });
+  }
+  // Se !isCompleted, as subtarefas mantêm seu estado individual (se existirem).
+
+  console.log(
+    `taskStorage.setTaskCompletion: Chamando saveTask para ${taskId} com isCompleted: ${task.isCompleted}`,
+  );
+  return saveTask(task, userId); // saveTask definirá needsSync = true
 };
 
 /**
@@ -202,12 +309,25 @@ export const updateSubtaskText = (
 ): boolean => {
   const task = getTaskById(taskId, userId);
   if (task && newText.trim()) {
+    // Verifica se newText não é apenas espaços em branco
     const subtaskIndex = task.subtasks.findIndex(sub => sub.id === subtaskId);
     if (subtaskIndex !== -1) {
       task.subtasks[subtaskIndex].text = newText.trim();
       // task.needsSync = true; // saveTask cuidará disso
+      console.log(
+        `taskStorage.updateSubtaskText: Atualizando texto da subtarefa ${subtaskId} para "${newText.trim()}" na tarefa ${taskId}`,
+      );
       return saveTask(task, userId);
+    } else {
+      console.warn(
+        `taskStorage.updateSubtaskText: Subtarefa ${subtaskId} não encontrada na tarefa ${taskId}`,
+      );
     }
+  } else if (task && !newText.trim()) {
+    console.warn(
+      `taskStorage.updateSubtaskText: Novo texto para subtarefa ${subtaskId} está vazio. Nenhuma alteração feita.`,
+    );
+    return false; // Não permite salvar texto vazio
   }
   return false;
 };

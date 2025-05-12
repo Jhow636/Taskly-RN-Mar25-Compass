@@ -1,59 +1,110 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import React, {useState, useEffect, useRef} from 'react';
+import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert, Animated} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import Button from '../../components/Button';
-import axios from 'axios';
-
-const updateAvatar = async (data: { picture: string }, token: string) => {
-    const response = await axios.put(
-        'http://15.229.11.44:3000/profile/avatar',
-        data,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        }
-    );
-    return response.data;
-};
-import { useAuth } from '../../context/AuthContext'; // Para obter o token do usuário
+import {useAuth} from '../../context/AuthContext';
+import {CustomApiError, updateFullProfile} from '../../services/api';
+import {UserEditStackParamList} from '../UserEdit';
+import {useTheme} from '../../theme/ThemeContext';
+import {Theme} from '../../theme/Theme';
+import BackMenu from '../../components/BackButtom';
+import { calculateProgressBarWidth } from '../../utils/AnimationUtils';
 
 const avatars = [
-  { id: 1, source: require('../../assets/avatarr1.png') },
-  { id: 2, source: require('../../assets/avatarr2.png') },
-  { id: 3, source: require('../../assets/avatarr3.png') },
-  { id: 4, source: require('../../assets/avatarr4.png') },
-  { id: 5, source: require('../../assets/avatarr5.png') },
+  {id: 1, source: require('../../assets/avatarr1.jpg')},
+  {id: 2, source: require('../../assets/avatarr2.jpg')},
+  {id: 3, source: require('../../assets/avatarr3.jpg')},
+  {id: 4, source: require('../../assets/avatarr4.jpg')},
+  {id: 5, source: require('../../assets/avatarr5.jpg')},
 ];
 
 const AvatarUpdate: React.FC = () => {
-  const navigation = useNavigation();
-  const { idToken } = useAuth(); // Obtém o token do usuário autenticado
-  const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progressoAtual, setProgressoAtual] = useState(0);
+  const progressoTotal = 100;
+  const [carregando, setCarregando] = useState(true);
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+  const { widthInterpolation } = calculateProgressBarWidth(
+      animatedProgress,
+      progressoAtual,
+      progressoTotal,
+    );
+  const navigation = useNavigation();
+  const route = useRoute<RouteProp<UserEditStackParamList, 'AvatarUpdate'>>();
+  const {newName, newPhone, currentPicture} = route.params;
+
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
+
+  const auth = useAuth();
+  const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
+
+
+useEffect(() => {
+    let contador = 50;
+      setProgressoAtual(contador);
+
+      if (contador >= progressoTotal) {
+        setCarregando(false);
+      }
+
+
+  }, []);
+
+  const incrementProgress = () => {
+    setProgressoAtual((prev) => Math.min(prev + 50, progressoTotal));
+  };
+
+
+
+
+
+
+  useEffect(() => {
+    if (currentPicture) {
+      const currentAvatar = avatars.find(avatar => `avatar_${avatar.id}` === currentPicture);
+      if (currentAvatar) {
+        setSelectedAvatarId(currentAvatar.id);
+      }
+    }
+  }, [currentPicture]);
 
   const handleSelectAvatar = (id: number) => {
+    incrementProgress();
     setSelectedAvatarId(id);
   };
 
   const handleConfirmSelection = async () => {
-    if (selectedAvatarId === null) {
-      Alert.alert('Aviso', 'Por favor, selecione um avatar para continuar.');
+    let pictureToUpdate: string;
+
+    if (selectedAvatarId !== null) {
+      pictureToUpdate = `avatar_${selectedAvatarId}`;
+    } else if (currentPicture) {
+      pictureToUpdate = currentPicture;
+    } else {
+      Alert.alert('Erro', 'Não foi possível determinar o avatar. Tente novamente.');
       return;
     }
 
     try {
       setLoading(true);
-      const avatarId = `avatar_${selectedAvatarId}`;
-      await updateAvatar({ picture: avatarId }, idToken); // Chama a API para atualizar o avatar
 
-      Alert.alert('Sucesso', 'Avatar atualizado com sucesso!');
-      navigation.goBack(); // Retorna para a tela anterior
+      await updateFullProfile({
+        name: newName,
+        phone_number: newPhone.replace(/\D/g, ''),
+        picture: pictureToUpdate,
+      });
+
+      navigation.navigate('Home', { avatarUpdated: true });
+      await auth.refreshUserProfile();
     } catch (error: any) {
-      console.error(error);
-      Alert.alert('Erro', error.message || 'Falha ao atualizar o avatar');
+      console.error('Erro ao atualizar perfil completo:', error);
+      const errorMessage =
+        error instanceof CustomApiError
+          ? error.message
+          : error.message || 'Falha ao atualizar o perfil.';
+      Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -61,12 +112,27 @@ const AvatarUpdate: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
+
+      <View style={styles.top}>
+          <BackMenu text="EDIÇÂO DE PERFIL" />
+      </View>
+      <View style={styles.progressBarContainer}>
+          <View style={styles.progressBarBackground}>
+            <Animated.View
+              style={[
+                styles.progressBarFill,
+                { width: widthInterpolation },
+              ]}
+                        />
+          </View>
+        </View>
+        
       <View style={styles.container}>
         <Text style={styles.title}>ATUALIZE SEU AVATAR</Text>
         <Text style={styles.subtitle}>(Escolha somente um)</Text>
         <View style={styles.avatarContainer}>
-          {avatars.map((avatar) => (
+          {avatars.map(avatar => (
             <TouchableOpacity
               key={avatar.id}
               style={[
@@ -74,8 +140,7 @@ const AvatarUpdate: React.FC = () => {
                 selectedAvatarId === avatar.id && styles.selectedAvatarButton,
               ]}
               onPress={() => handleSelectAvatar(avatar.id)}
-              activeOpacity={0.7}
-            >
+              activeOpacity={0.7}>
               <Image
                 source={avatar.source}
                 style={[
@@ -90,55 +155,88 @@ const AvatarUpdate: React.FC = () => {
           ))}
         </View>
         <Button
-          title="CONFIRMAR SELEÇÃO"
+          title={loading ? '' : 'CONFIRMAR ATUALIZAÇÃO'}
           onPress={handleConfirmSelection}
           loading={loading}
-          disabled={loading || selectedAvatarId === null}
+          disabled={loading}
         />
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
-  container: {
-    flex: 1,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  avatarContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 40,
-  },
-  avatarButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    margin: 10,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedAvatarButton: { borderColor: '#6200EE' },
-  avatarImage: { width: '100%', height: '100%' },
-  opaqueAvatar: { opacity: 0.4 },
-});
+const getStyles = (theme: Theme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    container: {
+      padding:40,
+      flex: 1,
+      alignItems: 'center',
+    },
+    title: {
+      ...theme.typography.bigTitle,
+      color: theme.colors.mainText,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...theme.typography.regular,
+      color: theme.colors.secondaryText,
+      marginBottom: 32,
+      textAlign: 'center',
+    },
+    progressBarContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      paddingLeft: 40,
+      paddingRight: 40,
+      paddingTop:40,
+    },
+    progressBarBackground: {
+      backgroundColor: theme.colors.primaryLight,
+      height: 8,
+      flex: 1,
+      marginRight: 10,
+      overflow: 'hidden',
+    },
+    progressBarFill: {
+      backgroundColor: theme.colors.primary,
+      height: '100%',
+      paddingTop:40,
+    },
+    avatarContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      marginBottom: 40,
+    },
+    avatarButton: {
+      width: 95,
+      height: 95,
+      borderRadius: 47.5,
+      margin: 10,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    selectedAvatarButton: {
+      borderColor: theme.colors.primary,
+    },
+    avatarImage: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 40,
+    },
+    opaqueAvatar: {
+      opacity: 0.4,
+    },
+    top:{
+     paddingTop:20,
+    },
+  });
 
 export default AvatarUpdate;

@@ -1,6 +1,9 @@
 import React from 'react';
-import {View, Text, Image} from 'react-native';
-import {useHeaderInternStyles} from './Header.style';
+import {View, Text, Image, Pressable} from 'react-native';
+import {useHeaderInternStyles} from './HeaderIntern.style';
+import {useNavigation} from '@react-navigation/native';
+import Icon from '@react-native-vector-icons/feather';
+import {useTheme} from '../../theme/ThemeContext';
 import {useAuth} from '../../context/AuthContext';
 
 const avatarImages: Record<string, any> = {
@@ -11,8 +14,10 @@ const avatarImages: Record<string, any> = {
   avatar_5: require('../../assets/avatarr5.jpg'),
 };
 
-const Header: React.FC = () => {
+const HeaderIntern: React.FC = () => {
   const styles = useHeaderInternStyles();
+  const navigation = useNavigation();
+  const {theme} = useTheme();
   const {userProfile} = useAuth();
 
   const avatarSource =
@@ -22,10 +27,13 @@ const Header: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Icon name="chevron-left" size={25} color={theme.colors.secondaryBg} />
+      </Pressable>
       <Text style={styles.titleText}>TASKLY</Text>
       <Image source={avatarSource} style={styles.profileImage} />
     </View>
   );
 };
 
-export default Header;
+export default HeaderIntern;

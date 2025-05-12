@@ -1,187 +1,237 @@
-import React, {createContext, useState, useEffect, useContext, ReactNode, useCallback} from 'react';
+import React, {createContext, useState, useContext, useEffect, ReactNode, useCallback} from 'react';
+import {jwtDecode} from 'jwt-decode';
 import {
-  getIdToken as getStoredIdToken,
+  saveAuthTokens,
+  getIdToken,
   getRefreshToken as getStoredRefreshToken,
-  saveAuthTokens as saveTokensToStorage,
-  clearAuthTokens as clearTokensFromStorage,
+  clearAuthTokens,
 } from '../storage/userStorage';
-import {ActivityIndicator, View} from 'react-native';
-import {useLoginStyles} from '../screens/login/LoginStyles'; // Ajuste o caminho se necessário
-import {useTheme} from '../theme/ThemeContext';
-import {jwtDecode, JwtPayload} from 'jwt-decode';
-import {initializeApiClient, apiClient} from '../services/api'; // apiClient importado para limpar headers no logout
+import {apiClient, initializeApiClient, getProfile} from '../services/api';
 
-interface FirebaseJwtPayload extends JwtPayload {
-  user_id?: string; // Firebase usa 'user_id' no token de ID
-  // Adicione outras claims que você espera, como 'name', 'email', 'picture' se estiverem no idToken
+export interface UserProfile {
+  uid: string;
+  email: string;
+  name: string;
+  picture: string;
+  phone_number?: string;
+}
+
+interface DecodedToken {
+  user_id: string;
+  exp: number;
 }
 
 interface AuthContextType {
   idToken: string | null;
   userId: string | null;
+  userProfile: UserProfile | null;
   isLoading: boolean;
   login: (idToken: string, refreshToken: string) => void;
   logout: () => void;
-  // refreshToken: string | null; // Expor refreshToken se necessário externamente, mas geralmente é interno
+  deleteUserAccount: () => Promise<void>;
+  getRefreshToken: () => string | null;
+  refreshTokensAndUpdateClient: (newIdToken: string, newRefreshToken: string) => void;
+  refreshUserProfile: () => Promise<void>;
+  registerSyncFunction: (syncFn: () => Promise<void>) => void;
+  triggerSync: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-const getUserIdFromToken = (token: string | null): string | null => {
-  if (!token) {
-    console.warn('getUserIdFromToken: No token provided.');
-    return null;
-  }
-  try {
-    // O idToken do Firebase já contém o user_id (sub ou user_id)
-    const decodedToken = jwtDecode<FirebaseJwtPayload>(token);
-    const userId = decodedToken.sub || decodedToken.user_id; // 'sub' é o padrão JWT, 'user_id' é comum no Firebase
-    if (!userId) {
-      console.error(
-        'getUserIdFromToken: Decoded token does not contain "sub" or "user_id" claim.',
-        decodedToken,
-      );
-      return null;
-    }
-    console.log(`getUserIdFromToken: Extracted UserID: ${userId}`);
-    return userId;
-  } catch (e) {
-    console.error('getUserIdFromToken: Error decoding token:', e);
-    return null;
-  }
-};
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
+export const AuthProvider = ({children}: {children: ReactNode}) => {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [refreshTokenState, setRefreshTokenState] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const styles = useLoginStyles();
-  const {theme} = useTheme();
+  const [syncFunction, setSyncFunction] = useState<(() => Promise<void>) | null>(null);
 
-  const performLogout = useCallback(() => {
-    console.log('AuthProvider: performLogout initiated.');
-    clearTokensFromStorage();
-    setIdToken(null);
-    setRefreshTokenState(null);
-    setUserId(null);
-    // Limpar o header de autorização do apiClient em caso de logout
-    if (apiClient.defaults.headers.common.Authorization) {
-      delete apiClient.defaults.headers.common.Authorization;
+  const getUserIdFromToken = (token: string): string | null => {
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      return decoded.user_id || null;
+    } catch (error) {
+      console.error('getUserIdFromToken: Error decoding token:', error);
+      return null;
     }
-    console.log(
-      'AuthProvider: User logged out. Tokens, UserID, and API client auth header cleared.',
-    );
-    // Adicionar navegação para a tela de Login aqui, se aplicável e se o navigation estiver disponível.
+  };
+
+  const fetchUserProfile = useCallback(async () => {
+    if (!apiClient.defaults.headers.common.Authorization) {
+      console.log('AuthProvider: Cannot fetch profile, no auth token set.');
+      return;
+    }
+    console.log('AuthProvider: Fetching user profile.');
+    try {
+      const profileData = await getProfile();
+      setUserProfile(profileData);
+      console.log('AuthProvider: User profile fetched and set:', profileData);
+    } catch (error) {
+      console.error('AuthProvider: Failed to fetch user profile:', error);
+    }
   }, []);
+
+  const performLogout = useCallback(async (isAccountDeletion: boolean = false) => {
+    console.log(`AuthProvider: Performing logout. Is account deletion: ${isAccountDeletion}`);
+    try {
+      if (!isAccountDeletion) {
+        // await apiClient.post('/auth/logout'); // Exemplo
+        console.log('AuthProvider: API logout call skipped or not implemented for regular logout.');
+      }
+    } catch (error) {
+      console.error('AuthProvider: Error during API logout call:', error);
+    } finally {
+      clearAuthTokens();
+      setIdToken(null);
+      setRefreshTokenState(null);
+      setUserId(null);
+      setUserProfile(null);
+      if (apiClient.defaults.headers.common.Authorization) {
+        delete apiClient.defaults.headers.common.Authorization;
+      }
+      console.log('AuthProvider: User logged out, tokens and profile cleared.');
+    }
+  }, []);
+
+  const refreshTokensAndUpdateClient = useCallback(
+    async (newIdToken: string, newRefreshToken: string) => {
+      console.log('AuthProvider (via APIClient): Refreshing tokens.');
+      saveAuthTokens(newIdToken, newRefreshToken);
+      setIdToken(newIdToken);
+      setRefreshTokenState(newRefreshToken);
+      const currentUserId = getUserIdFromToken(newIdToken);
+      setUserId(currentUserId);
+      apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
+      console.log('AuthProvider (via APIClient): Tokens refreshed. UserID:', currentUserId);
+      await fetchUserProfile();
+    },
+    [fetchUserProfile],
+  );
+
+  const deleteUserAccount = async () => {
+    console.log('AuthProvider: Attempting to delete user account.');
+    if (!idToken) {
+      console.error('AuthProvider: No user logged in to delete.');
+      throw new Error('Nenhum usuário logado para excluir.');
+    }
+    try {
+      await apiClient.delete('/profile/delete-account');
+      console.log('AuthProvider: API call to delete account successful.');
+      await performLogout(true);
+      console.log('AuthProvider: Account deleted successfully and user logged out.');
+    } catch (error) {
+      console.error('AuthProvider: Error deleting user account:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     console.log('AuthProvider: Initializing API client and checking token.');
-    initializeApiClient(
-      () => refreshTokenState, // Fornece o refreshToken atual do estado
-      (newIdToken, newRefreshToken) => {
-        // Chamado pelo interceptor da API ao renovar tokens
-        console.log('AuthProvider (via APIClient): Refreshing tokens.');
-        saveTokensToStorage(newIdToken, newRefreshToken);
-        setIdToken(newIdToken);
-        setRefreshTokenState(newRefreshToken);
-        const currentUserId = getUserIdFromToken(newIdToken);
-        setUserId(currentUserId);
-        apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
-        console.log('AuthProvider (via APIClient): Tokens refreshed. UserID:', currentUserId);
-      },
-      performLogout, // Passa a função de logout para o interceptor da API
-    );
+    initializeApiClient(() => refreshTokenState, refreshTokensAndUpdateClient, performLogout);
 
     const checkStoredToken = async () => {
       setIsLoading(true);
       console.log('AuthProvider: Checking stored tokens.');
       try {
-        const storedId = getStoredIdToken();
+        const storedId = getIdToken();
         const storedRefresh = getStoredRefreshToken();
 
         if (storedId && storedRefresh) {
           const currentUserId = getUserIdFromToken(storedId);
-          if (currentUserId) {
+          const decodedToken = jwtDecode<DecodedToken>(storedId);
+          if (decodedToken.exp * 1000 > Date.now()) {
             setIdToken(storedId);
             setRefreshTokenState(storedRefresh);
             setUserId(currentUserId);
             apiClient.defaults.headers.common.Authorization = `Bearer ${storedId}`;
             console.log('AuthProvider: Stored tokens loaded. UserID:', currentUserId);
+            await fetchUserProfile();
           } else {
-            // Token decodificado não resultou em um UserID (pode estar malformado ou realmente expirado)
-            console.log(
-              'AuthProvider: Stored ID token invalid or could not extract UserID. Logging out.',
-            );
+            console.log('AuthProvider: Stored ID token expired. Logging out.');
             performLogout();
           }
         } else {
           console.log('AuthProvider: No stored tokens found.');
-          // Garante que o estado esteja limpo se não houver tokens
-          performLogout();
+          setUserProfile(null);
         }
-      } catch (e) {
-        console.error('AuthProvider: Failed to load tokens on mount.', e);
-        performLogout(); // Erro ao carregar, melhor deslogar
+      } catch (error) {
+        console.error('AuthProvider: Error checking stored token:', error);
+        performLogout();
       } finally {
         setIsLoading(false);
-        console.log('AuthProvider: Token check finished. isLoading:', isLoading);
       }
     };
 
     checkStoredToken();
-  }, [performLogout, refreshTokenState, isLoading]); // Adicionar isLoading aqui
+  }, [performLogout, refreshTokenState, refreshTokensAndUpdateClient, fetchUserProfile]);
 
-  const login = useCallback(
-    (newIdToken: string, newRefreshToken: string) => {
-      try {
-        console.log('AuthProvider: login called.');
-        saveTokensToStorage(newIdToken, newRefreshToken);
-        const currentUserId = getUserIdFromToken(newIdToken);
-        setIdToken(newIdToken);
-        setRefreshTokenState(newRefreshToken);
-        setUserId(currentUserId);
-        apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
-        console.log('AuthProvider: User logged in. UserID set to:', currentUserId);
-      } catch (e) {
-        console.error('AuthProvider: Failed to save tokens or set user ID on login.', e);
-        performLogout(); // Se o login falhar em configurar o estado corretamente
-      }
-    },
-    [performLogout],
-  );
+  const login = async (newIdToken: string, newRefreshToken: string) => {
+    console.log('AuthProvider: login called.');
+    saveAuthTokens(newIdToken, newRefreshToken);
+    setIdToken(newIdToken);
+    setRefreshTokenState(newRefreshToken);
+    const currentUserId = getUserIdFromToken(newIdToken);
+    setUserId(currentUserId);
+    apiClient.defaults.headers.common.Authorization = `Bearer ${newIdToken}`;
+    console.log('AuthProvider: User logged in. UserID set to:', currentUserId);
+    await fetchUserProfile();
+  };
 
-  const logout = useCallback(() => {
+  const logout = () => {
     performLogout();
-  }, [performLogout]);
+  };
 
-  if (isLoading) {
-    console.log('AuthProvider: Rendering loading indicator.');
-    return (
-      <View style={[styles.loadingContainer, {backgroundColor: theme.colors.background}]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
+  const getRefreshToken = useCallback(() => {
+    return refreshTokenState;
+  }, [refreshTokenState]);
+
+  const refreshUserProfile = useCallback(async () => {
+    console.log('AuthProvider: Refresh user profile explicitly called.');
+    await fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  const registerSyncFunction = useCallback((syncFn: () => Promise<void>) => {
+    console.log('AuthProvider: Sync function registered.');
+    setSyncFunction(() => syncFn);
+  }, []);
+
+  const triggerSync = useCallback(async () => {
+    if (syncFunction) {
+      console.log('AuthProvider: Triggering sync requested by another screen.');
+      await syncFunction();
+    } else {
+      console.warn('AuthProvider: Sync trigger requested, but no sync function is registered.');
+    }
+  }, [syncFunction]);
 
   console.log(
-    'AuthProvider: Rendering children. UserID:',
-    userId,
-    'idToken:',
-    idToken ? 'present' : 'null',
+    `AuthProvider: Rendering. UserID: ${userId}, Profile: ${
+      userProfile ? userProfile.name : 'none'
+    }, Token: ${idToken ? 'present' : 'absent'}`,
   );
+
   return (
-    <AuthContext.Provider value={{idToken, userId, isLoading, login, logout}}>
+    <AuthContext.Provider
+      value={{
+        idToken,
+        userId,
+        userProfile,
+        isLoading,
+        login,
+        logout,
+        deleteUserAccount,
+        getRefreshToken,
+        refreshTokensAndUpdateClient,
+        refreshUserProfile,
+        registerSyncFunction,
+        triggerSync,
+      }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

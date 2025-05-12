@@ -22,4 +22,5 @@ export interface Task {
   updatedAt: string;
   needsSync: boolean;
   isDeleted?: boolean;
+  _isNewForApi?: boolean;
 }

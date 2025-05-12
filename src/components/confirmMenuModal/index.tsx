@@ -1,62 +1,53 @@
-import {   Text, TouchableOpacity, StyleSheet, Modal, View } from 'react-native';
-import { Theme } from '../../theme/Theme';
-import { useTheme } from '../../theme/ThemeContext';
-
+import {Text, TouchableOpacity, StyleSheet, Modal, View} from 'react-native';
+import {Theme} from '../../theme/Theme';
+import {useTheme} from '../../theme/ThemeContext';
 
 interface ConfirmMenuModalProps {
-   title:string,
-   isVisible: boolean;
-   onClose: () => void;
-   onConfirm: () => void;
-   confirmButtonText: string;
-   confirmButtonColor?: string;
-   modalText?: string; // Nova prop para a mensagem do modal
-   action:() => any;
-  }
+  title: string;
+  isVisible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  confirmButtonText: string;
+  confirmButtonColor?: string;
+  modalText?: string;
+}
 
 const ConfirmMenuModal: React.FC<ConfirmMenuModalProps> = ({
-   isVisible,
-   onClose,
-   onConfirm,
-   confirmButtonText,
-   confirmButtonColor = 'red',
-   modalText,
-   title,
-   action
-  }) => {
-    const {theme} = useTheme();
-    const styles = getStyle(theme);
+  isVisible,
+  onClose,
+  onConfirm,
+  confirmButtonText,
+  confirmButtonColor = 'red',
+  modalText,
+  title,
+}) => {
+  const {theme} = useTheme();
+  const styles = getStyle(theme);
 
-    return(
-        <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isVisible}
-        onRequestClose={onClose}
-    >
+  return (
+    <Modal animationType="fade" transparent={true} visible={isVisible} onRequestClose={onClose}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalText}>{title}</Text>
           <Text style={styles.modalSubText}>{modalText}</Text>
-          {/* ... restante do seu modal */}
           <View style={styles.buttonsContainer}>
             <TouchableOpacity style={styles.dennyButton} onPress={onClose}>
-              <Text style={styles.dennyButtonText} >Agora não</Text>
+              <Text style={styles.dennyButtonText}>Agora não</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, styles.confirmButton, { backgroundColor: confirmButtonColor }]}
-              onPress={()=>{onConfirm()}}
-            >
-              <Text style={styles.buttonText} >{confirmButtonText}</Text>
+              style={[styles.button, styles.confirmButton, {backgroundColor: confirmButtonColor}]}
+              onPress={onConfirm}>
+              <Text style={styles.buttonText}>{confirmButtonText}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
     </Modal>
-    );
+  );
 };
 
-const getStyle = (theme: Theme) => StyleSheet.create({
+const getStyle = (theme: Theme) =>
+  StyleSheet.create({
     centeredView: {
       flex: 1,
       justifyContent: 'center',
@@ -65,8 +56,8 @@ const getStyle = (theme: Theme) => StyleSheet.create({
     },
     modalView: {
       backgroundColor: theme.colors.background,
-      width:329,
-      minHeight:187,
+      width: 329,
+      minHeight: 187,
       borderRadius: 10,
       padding: 20,
       alignItems: 'center',
@@ -83,15 +74,15 @@ const getStyle = (theme: Theme) => StyleSheet.create({
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: 10,
-      alignSelf:'flex-start',
-      marginLeft:5,
+      alignSelf: 'flex-start',
+      marginLeft: 5,
       color: theme.colors.mainText,
     },
     modalSubText: {
       fontSize: 16,
       color: theme.colors.mainText,
       marginBottom: 20,
-      marginLeft:5,
+      marginLeft: 5,
     },
     buttonsContainer: {
       flexDirection: 'row',
@@ -101,19 +92,19 @@ const getStyle = (theme: Theme) => StyleSheet.create({
     button: {
       backgroundColor: '#ddd',
       borderRadius: 8,
-      textAlign:'center',
-      justifyContent:'center',
-      minWidth:134.5,
-      height:37,
+      textAlign: 'center',
+      justifyContent: 'center',
+      minWidth: 134.5,
+      height: 37,
     },
     dennyButton: {
       backgroundColor: 'rgba(0, 0, 0, 0)',
       borderRadius: 8,
-      textAlign:'center',
-      justifyContent:'center',
-      minWidth:134.5,
-      height:37,
-      borderWidth:2,
+      textAlign: 'center',
+      justifyContent: 'center',
+      minWidth: 134.5,
+      height: 37,
+      borderWidth: 2,
       borderColor: theme.colors.primary,
     },
     confirmButton: {

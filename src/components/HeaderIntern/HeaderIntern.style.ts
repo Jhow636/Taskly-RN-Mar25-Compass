@@ -12,9 +12,16 @@ export const useHeaderInternStyles = () => {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: 30,
-          padding: 30,
+          paddingVertical: 30,
           backgroundColor: theme.colors.background,
+        },
+        backButton: {
+          backgroundColor: theme.colors.secondaryText,
+          borderRadius: 12,
+          padding: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: theme.colors.mainText,
         },
         titleText: {
           ...theme.typography.bigTitle,

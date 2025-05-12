@@ -1,20 +1,47 @@
-import React from 'react';
-import {View, Text, TouchableOpacity, Image} from 'react-native';
+import React, {useState, useRef} from 'react';
+import {View, Text, TouchableOpacity, Alert, Image} from 'react-native';
 import {Swipeable} from 'react-native-gesture-handler';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import {Subtask} from '../../data/models/Task';
 import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
+import Icon from '@react-native-vector-icons/feather';
+import AddItemInput from '../inputs/AddItemInput';
+import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
+import {useTheme} from '../../theme/ThemeContext';
 
 interface SubtaskItemProps {
   subtask: Subtask;
   onToggleComplete: () => void;
   onDelete: () => void;
-  // onEdit?: () => void; // Para edição futura
+  onEditTextConfirm: (subtaskId: string, newText: string) => void;
 }
 
-const SubtaskItem = ({subtask, onToggleComplete, onDelete}: SubtaskItemProps) => {
+const SubtaskItem = ({
+  subtask,
+  onToggleComplete,
+  onDelete,
+  onEditTextConfirm,
+}: SubtaskItemProps) => {
   const styles = useTaskDetailStyles();
-  const swipeableRef = React.useRef<Swipeable>(null);
+  const {theme} = useTheme();
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(subtask.text);
+
+  const handleEditPress = () => {
+    setEditText(subtask.text);
+    setIsEditing(true);
+  };
+
+  const handleEditConfirm = () => {
+    if (!editText.trim()) {
+      Alert.alert('Texto inválido', 'O texto da subtarefa não pode ser vazio.');
+      return;
+    }
+    onEditTextConfirm(subtask.id, editText.trim());
+    setIsEditing(false);
+  };
 
   const renderRightActions = () => {
     return (
@@ -24,10 +51,27 @@ const SubtaskItem = ({subtask, onToggleComplete, onDelete}: SubtaskItemProps) =>
           swipeableRef.current?.close();
           onDelete();
         }}>
-        <Image source={require('../../assets/img/delete-icon.png')} style={styles.icon} />
+        <Icon name="trash" size={24} color={theme.colors.mainText} />
       </TouchableOpacity>
     );
   };
+
+  if (isEditing) {
+    return (
+      <View style={[styles.subtaskItem, styles.subtaskItemEditing]}>
+        <View style={{flex: 1}}>
+          <AddItemInput
+            inputValue={editText}
+            onInputChange={setEditText}
+            onAddItem={handleEditConfirm}
+            placeholder="Editar subtarefa..."
+            buttonIcon={faCheckCircle}
+            iconSize={20}
+          />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <Swipeable ref={swipeableRef} renderRightActions={renderRightActions} overshootRight={false}>
@@ -35,6 +79,7 @@ const SubtaskItem = ({subtask, onToggleComplete, onDelete}: SubtaskItemProps) =>
         <AdvancedCheckbox
           value={subtask.isCompleted}
           onValueChange={onToggleComplete}
+          checkedImage={require('../../assets/img/checkbox-checked.png')}
           checkedColor="#32C25B"
           uncheckedColor="#B58B46"
           checkBoxStyle={styles.subtaskCheckbox}
@@ -43,10 +88,9 @@ const SubtaskItem = ({subtask, onToggleComplete, onDelete}: SubtaskItemProps) =>
         <Text style={[styles.subtaskText, subtask.isCompleted && styles.subtaskTextCompleted]}>
           {subtask.text}
         </Text>
-        {/* Ícone de Editar (para futuro) */}
-        {/* <TouchableOpacity onPress={onEdit} style={styles.subtaskEditIcon}>
-            <Image source={require('../../assets/img/edit-icon.png')} style={styles.icon} />
-        </TouchableOpacity> */}
+        <TouchableOpacity onPress={handleEditPress} style={styles.subtaskEditIcon}>
+          <Image source={require('../../assets/img/editIconLight.png')} style={styles.icon} />
+        </TouchableOpacity>
       </View>
     </Swipeable>
   );

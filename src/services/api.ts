@@ -1,4 +1,5 @@
 import axios, {AxiosError, InternalAxiosRequestConfig} from 'axios';
+import {UserProfile} from '../context/AuthContext';
 
 const API_BASE_URL = 'http://15.229.11.44:3000';
 
@@ -261,29 +262,39 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
 
 // Adicionar a função updateFullProfile e exportá-la
 export const updateFullProfile = async (profileData: {
-  name: string;
-  phone: string;
-  picture: string;
+  name: string | undefined;
+  phone_number: string | undefined;
+  picture: string | undefined;
 }): Promise<void> => {
-  try {
-    await apiClient.post('/profile', {
-      name: profileData.name,
-      phone: profileData.phone.replace(/\D/g, ''), // API espera apenas números
-      picture: profileData.picture,
-    });
-  } catch (error) {
-    console.error('Erro ao atualizar perfil completo (API):', error);
-    throw error; // Re-throw para ser tratado pelo chamador
+  // Validação defensiva ANTES de usar .trim()
+  if (!profileData.name || !profileData.phone_number || !profileData.picture) {
+    throw new Error('Todos os campos (name, phone_number, picture) são obrigatórios.');
   }
+
+  const name = profileData.name.trim();
+  const phone_number = profileData.phone_number.trim();
+  const picture = profileData.picture.trim();
+
+  // Validação extra para telefone
+  const cleanedPhone = phone_number.replace(/\D/g, '');
+  if (!/^\d{10,11}$/.test(cleanedPhone)) {
+    throw new Error('O campo phone_number deve conter apenas números.');
+  }
+
+  await apiClient.put('/profile', {
+    name,
+    phone_number: cleanedPhone,
+    picture,
+  });
 };
 
 // --- Outras funções da API que você pode ter ---
 
 // GET /profile
-export const getProfile = async (): Promise<any> => {
+export const getProfile = async (): Promise<UserProfile> => {
   // Defina uma interface para o perfil
   const response = await apiClient.get('/profile');
-  return response.data;
+  return response.data as UserProfile;
 };
 
 // PUT /profile/name
@@ -314,13 +325,6 @@ export const createTask = async (taskData: any): Promise<any> => {
 export const updateTask = async (taskId: string, taskData: any): Promise<void> => {
   // Defina uma interface
   await apiClient.put(`/tasks/${taskId}`, taskData);
-};
-
-// PUT /tasks/:id/share
-export const shareTask = async (taskId: string, sharedWith: string[]): Promise<any> => {
-  // Verifique o tipo de resposta
-  const response = await apiClient.put(`/tasks/${taskId}/share`, {sharedWith});
-  return response.data;
 };
 
 // GET /users/search
