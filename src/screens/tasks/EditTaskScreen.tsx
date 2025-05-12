@@ -120,8 +120,21 @@ const EditTaskScreen = () => {
   };
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim().toUpperCase())) {
-      setTags([...tags, tagInput.trim().toUpperCase()]);
+    const trimmedTag = tagInput.trim();
+
+    if (!trimmedTag) {
+      setTagInput('');
+      return;
+    }
+
+    if (/\s/.test(trimmedTag)) {
+      Alert.alert('Tag inválida', 'Tags não podem conter espaços.');
+      return;
+    }
+
+    const upperTag = trimmedTag.toUpperCase();
+    if (!tags.includes(upperTag)) {
+      setTags([...tags, upperTag]);
     }
     setTagInput('');
   };
