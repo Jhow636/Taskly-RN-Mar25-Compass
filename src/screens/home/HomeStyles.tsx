@@ -8,6 +8,7 @@ export const useHomeStyles = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
+        // Estilos existentes
         outerContainer: {
           flex: 1,
           backgroundColor: theme.colors.background,
@@ -142,6 +143,72 @@ export const useHomeStyles = () => {
           position: 'absolute',
           top: 10, // Ajuste conforme necessário
           alignSelf: 'center',
+          zIndex: 10,
+        },
+
+        // Estilos para o filtro
+        activeFiltersContainer: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: theme.colors.primaryLight,
+          borderRadius: 8,
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          marginHorizontal: 16,
+          marginTop: 16,
+          marginBottom: 8,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 1},
+          shadowOpacity: 0.1,
+          shadowRadius: 1,
+          elevation: 1,
+        },
+        activeFiltersText: {
+          ...theme.typography.caption,
+          color: theme.colors.mainText,
+          flex: 1,
+        },
+        clearFiltersText: {
+          ...theme.typography.caption,
+          color: theme.colors.primary,
+          fontWeight: 'bold',
+        },
+        noFilteredTasksContainer: {
+          padding: 24,
+          alignItems: 'center',
+          backgroundColor: theme.colors.secondaryBg,
+          borderRadius: 8,
+          margin: 16,
+          marginTop: 32,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 2,
+        },
+        noFilteredTasksText: {
+          ...theme.typography.regular,
+          color: theme.colors.secondaryText,
+          textAlign: 'center',
+          marginBottom: 16,
+        },
+        clearFiltersButton: {
+          backgroundColor: theme.colors.primary,
+          paddingVertical: 8,
+          paddingHorizontal: 16,
+          borderRadius: 8,
+        },
+        clearFiltersButtonText: {
+          ...theme.typography.caption,
+          color: theme.colors.secondaryBg,
+        },
+
+        // Estilo para o botão de filtro no topo da tela (apenas ícone)
+        topFilterButton: {
+          alignSelf: 'center',
+          marginTop: 10,
+          marginBottom: -5,
           zIndex: 10,
         },
       }),
