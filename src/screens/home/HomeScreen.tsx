@@ -25,11 +25,99 @@ import CreateTaskModal from '../../components/modals/CreateTaskModal';
 import FilterModal, {FilterOptions} from '../../components/FilterModal';
 import {AdvancedCheckbox} from 'react-native-advanced-checkbox';
 import Header from '../../components/Header';
-import EmptyStateComponent from '../../components/EmptyState.tsx/index';
-import LogoutButton from '../../components/LogoutButton';
+import EmptyStateComponent from '../../components/EmptyState.tsx';
 import {generateUniqueId} from '../../utils/idGenerator';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faFilter} from '@fortawesome/free-solid-svg-icons/faFilter';
+
+// Helper para mapear prioridade local para valor da API
+const mapPriorityToApiValue = (priority: Priority): 1 | 2 | 3 => {
+  switch (priority) {
+    case 'ALTA':
+      return 1;
+    case 'MÉDIA':
+      return 2;
+    case 'BAIXA':
+      return 3;
+    default:
+      console.warn(`Prioridade desconhecida: ${priority}, usando padrão 2 (MÉDIA)`);
+      return 2;
+  }
+};
+
+// Helper para mapear prioridade da API (numérica) para local (string)
+const mapApiPriorityToLocal = (apiPriority: number | string | undefined): Priority => {
+  const priorityNum = typeof apiPriority === 'string' ? parseInt(apiPriority, 10) : apiPriority;
+  switch (priorityNum) {
+    case 1:
+      return 'ALTA';
+    case 2:
+      return 'MÉDIA';
+    case 3:
+      return 'BAIXA';
+    default:
+      // Se a API retornar algo inesperado ou undefined, usar um padrão local
+      console.warn(
+        `Prioridade da API desconhecida ou ausente: ${apiPriority}, usando padrão MÉDIA`,
+      );
+      return 'MÉDIA';
+  }
+};
+
+// Helper para formatar data ISO para dd/mm/yyyy
+const formatDateToDdMmYyyy = (isoDateString: string): string => {
+  if (!isoDateString) {
+    return '';
+  }
+  try {
+    const date = new Date(isoDateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (e) {
+    console.error('Erro ao formatar data para dd/mm/yyyy:', isoDateString, e);
+    return '';
+  }
+};
+
+// Helper para converter "dd/mm/yyyy" para string ISO (YYYY-MM-DDTHH:mm:ss.sssZ)
+const parseDdMmYyyyToISO = (dateString: string | undefined): string => {
+  if (!dateString || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    // Se a string estiver vazia, undefined, inválida ou não no formato esperado,
+    // retorna uma string vazia. O componente de data/lógica local deve lidar com isso.
+    if (dateString) {
+      // Loga apenas se não for undefined/null/vazio para evitar spam
+      console.warn(
+        `Data da API inválida ou vazia para conversão para ISO: '${dateString}'. Retornando string vazia.`,
+      );
+    }
+    return '';
+  }
+  try {
+    const parts = dateString.split('/');
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Mês é 0-indexado em JavaScript Date
+    const year = parseInt(parts[2], 10);
+    // Cria a data em UTC para evitar problemas de fuso horário ao converter para ISO string
+    const date = new Date(Date.UTC(year, month, day));
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month &&
+      date.getUTCDate() === day
+    ) {
+      return date.toISOString();
+    } else {
+      console.error(
+        `Falha ao parsear data "dd/mm/yyyy" para ISO: ${dateString} resultou em data inválida.`,
+      );
+      return '';
+    }
+  } catch (e) {
+    console.error(`Erro ao parsear data "dd/mm/yyyy" para ISO: ${dateString}`, e);
+    return '';
+  }
+};
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Home'>;
 
@@ -98,17 +186,6 @@ const HomeScreen: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  const prepareTaskPayloadForApi = (task: TaskModel) => {
-    return {
-      title: task.title,
-      description: task.description,
-      done: task.isCompleted,
-      subtasks: task.subtasks.map(st => ({title: st.text, done: st.isCompleted})),
-      tags: task.tags,
-    };
-  };
-
-  // Definindo applyFilters fora do useCallback para evitar dependência circular
   const applyFilters = useCallback(
     (filters: FilterOptions, taskList = tasks): void => {
       let filteredTasks = [...taskList];
@@ -141,6 +218,37 @@ const HomeScreen: React.FC = () => {
 
   const syncLocalTasksWithApi = useCallback(
     async (isManualRefresh = false) => {
+      const prepareTaskPayloadForApi = (
+        task: TaskModel,
+        isShellForStatusUpdateOnly: boolean = false,
+      ) => {
+        if (isShellForStatusUpdateOnly) {
+          return {
+            done: task.isCompleted,
+          };
+        }
+
+        const deadlineFormatted = formatDateToDdMmYyyy(task.dueDate);
+
+        const payload: any = {
+          title: task.title,
+          description: task.description,
+          done: task.isCompleted,
+          priority: mapPriorityToApiValue(task.priority),
+          subtasks: task.subtasks.map(st => ({title: st.text, done: st.isCompleted})),
+          tags: task.tags,
+        };
+
+        if (deadlineFormatted) {
+          payload.deadline = deadlineFormatted;
+        } else if (task._isNewForApi) {
+          console.error(
+            `CRÍTICO: Tentando criar nova tarefa (POST) com deadline formatado vazio para task.dueDate: ${task.dueDate}. Task ID local: ${task.id}. Verifique a lógica do CreateTaskModal.`,
+          );
+        }
+        return payload;
+      };
+
       if (!userId || !idToken) {
         setIsLoading(false);
         setTasks([]);
@@ -248,34 +356,47 @@ const HomeScreen: React.FC = () => {
           needsSync: false,
           isDeleted: false,
         }));
-        setTasks(formattedApiTasks);
 
-        // Extract all available tags from tasks
-        const allTags = new Set<string>();
-        formattedApiTasks.forEach(task => {
-          if (task.tags && task.tags.length > 0) {
-            task.tags.forEach(tag => allTags.add(tag));
+        if (userId) {
+          for (const apiTask of formattedApiTasks) {
+            const localTask = getAllLocalTasks(userId).find(t => t.id === apiTask.id);
+
+            // Se a task local tem alterações pendentes, NÃO sobrescreva!
+            if (localTask && localTask.needsSync) {
+              continue;
+            }
+
+            // Merge de subtarefas: preserva IDs locais se o texto for igual
+            const mergedSubtasks = (apiTask.subtasks || []).map(apiSub => {
+              const localSub = localTask?.subtasks?.find(ls => ls.text === apiSub.text);
+              return {
+                ...apiSub,
+                id: localSub ? localSub.id : apiSub.id || generateUniqueId(),
+              };
+            });
+
+            saveTaskFromApi(
+              {
+                ...apiTask,
+                subtasks: mergedSubtasks,
+              },
+              userId,
+            );
           }
-        });
-        setAvailableTags(Array.from(allTags));
-
-        // Apply current filters if they exist
-        if (activeFilters) {
-          applyFilters(activeFilters, formattedApiTasks);
+          const updatedLocalTasks = getAllLocalTasks(userId);
+          setTasks(updatedLocalTasks);
+          console.log(
+            `Sync: Fetched ${formattedApiTasks.length} tasks from API. Local storage updated. Displaying ${updatedLocalTasks.length} tasks.`,
+          );
         } else {
-          setDisplayedTasks(formattedApiTasks);
+          setTasks([]);
         }
-
-        console.log(
-          `Sync: Fetched ${formattedApiTasks.length} tasks from API. Displaying API tasks.`,
-        );
       } catch (error) {
         console.error('Sync: Error fetching tasks from API:', error);
         Alert.alert('Erro de Rede', 'Não foi possível buscar suas tarefas. Verifique sua conexão.');
-        if (!isManualRefresh) {
-          const remainingLocalTasks = getAllLocalTasks(userId);
-          setTasks(remainingLocalTasks);
-          setDisplayedTasks(remainingLocalTasks);
+        if (userId) {
+          const localFallbackTasks = getAllLocalTasks(userId);
+          setTasks(localFallbackTasks);
           console.log(
             `Sync: API fetch failed. Displaying ${localFallbackTasks.length} local tasks as fallback.`,
           );
@@ -341,8 +462,8 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  const handleTaskPress = (taskId: string): void => {
-    navigation.navigate('TaskDetails', {taskId});
+  const handleTaskPress = (task: TaskModel) => {
+    navigation.navigate('TaskDetails', {task});
   };
 
   const handleToggleComplete = (taskId: string): void => {
@@ -360,20 +481,13 @@ const HomeScreen: React.FC = () => {
       }
       updatedTasks[taskIndex] = taskToToggle;
       setTasks(updatedTasks);
-
-      // Update displayed tasks as well
-      const displayedIndex = displayedTasks.findIndex(t => t.id === taskId);
-      if (displayedIndex > -1) {
-        const updatedDisplayedTasks = [...displayedTasks];
-        updatedDisplayedTasks[displayedIndex].isCompleted = taskToToggle.isCompleted;
-        if (taskToToggle.isCompleted) {
-          updatedDisplayedTasks[displayedIndex].subtasks.forEach(sub => (sub.isCompleted = true));
-        }
-        setDisplayedTasks(updatedDisplayedTasks);
+      const localUpdateSuccess = setLocalTaskCompletion(taskId, taskToToggle.isCompleted, userId);
+      console.log(
+        `HomeScreen.handleToggleComplete: setLocalTaskCompletion para ${taskId} retornou: ${localUpdateSuccess}`,
+      );
+      if (localUpdateSuccess) {
+        syncLocalTasksWithApi(true);
       }
-
-      setLocalTaskCompletion(taskId, taskToToggle.isCompleted, userId);
-      syncLocalTasksWithApi(true);
     }
   };
 
@@ -397,12 +511,21 @@ const HomeScreen: React.FC = () => {
     );
   }
 
-  const hasTasks = displayedTasks.length > 0;
-  const hasFilters = activeFilters && (activeFilters.tags.length > 0 || true);
+  const activeTasks = tasks.filter(task => !task.isDeleted);
+  const hasTasks = activeTasks.length > 0;
+  const hasFilters = !!activeFilters && (activeFilters.tags?.length > 0 || true);
 
   return (
     <View style={styles.outerContainer}>
       <Header />
+      {/* Botão de filtro no topo */}
+      <Pressable
+        style={styles.topFilterButton}
+        onPress={openFilterModal}
+        accessibilityLabel="Abrir filtros"
+        hitSlop={10}>
+        <FontAwesomeIcon icon={faFilter} size={22} color={'#B58B46'} />
+      </Pressable>
       {isSyncing && (
         <ActivityIndicator style={styles.syncIndicator} size="small" color={theme.colors.primary} />
       )}
@@ -443,29 +566,20 @@ const HomeScreen: React.FC = () => {
             </View>
           )
         ) : hasTasks && userId ? (
-          <>
-            {/* Botão de filtro como na imagem 1 - apenas o ícone no canto esquerdo */}
-            {tasks.length > 0 && (
-              <Pressable style={styles.topFilterButton} onPress={openFilterModal}>
-                <FontAwesomeIcon icon={faFilter} size={24} color="#B58B46" />
-              </Pressable>
+          <FlatList
+            data={activeTasks}
+            renderItem={({item}) => (
+              <TaskItem
+                task={item}
+                onPress={() => handleTaskPress(item)}
+                onToggleComplete={() => handleToggleComplete(item.id)}
+              />
             )}
-
-            <FlatList
-              data={displayedTasks}
-              renderItem={({item}) => (
-                <TaskItem
-                  task={item}
-                  onPress={() => handleTaskPress(item.id)}
-                  onToggleComplete={() => handleToggleComplete(item.id)}
-                />
-              )}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContentContainer}
-              refreshing={isSyncing}
-              onRefresh={() => syncLocalTasksWithApi(true)}
-            />
-          </>
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContentContainer}
+            refreshing={isSyncing}
+            onRefresh={() => syncLocalTasksWithApi(true)}
+          />
         ) : (
           <View style={styles.loadingContainer}>
             {isLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}

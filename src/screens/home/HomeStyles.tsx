@@ -206,9 +206,9 @@ export const useHomeStyles = () => {
 
         // Estilo para o botão de filtro no topo da tela (apenas ícone)
         topFilterButton: {
-          alignSelf: 'center',
-          marginTop: 10,
-          marginBottom: -5,
+          alignSelf: 'flex-end',
+          marginBottom: 10,
+          marginRight: 30,
           zIndex: 10,
         },
       }),

@@ -4,6 +4,7 @@ import {Swipeable} from 'react-native-gesture-handler';
 import {Task} from '../../data/models/Task';
 import {useTaskDetailStyles} from '../../screens/tasks/TaskDetailStyles';
 import Icon from '@react-native-vector-icons/feather';
+import {useTheme} from '../../theme/ThemeContext';
 
 interface TaskDetailCardProps {
   task: Task;
@@ -14,6 +15,7 @@ interface TaskDetailCardProps {
 
 const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCardProps) => {
   const styles = useTaskDetailStyles();
+  const {theme} = useTheme();
 
   // Função para renderizar ação de swipe para deletar a tarefa principal
   const renderTaskDeleteAction = () => (
@@ -21,6 +23,13 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
       <Icon name="trash" size={30} color={styles.icon.tintColor} />
     </TouchableOpacity>
   );
+
+  // Estilos condicionais para o botão "REABRIR TAREFA"
+  const isReopen = task.isCompleted;
+  const reopenButtonStyle = isReopen
+    ? {backgroundColor: theme.colors.error, borderColor: theme.colors.error}
+    : {};
+  const reopenTextStyle = isReopen ? {color: theme.colors.secondaryBg} : {};
 
   return (
     <Swipeable renderRightActions={renderTaskDeleteAction} overshootRight={false}>
@@ -66,9 +75,11 @@ const TaskDetailCard = ({task, onEdit, onToggleComplete, onDelete}: TaskDetailCa
         </View>
 
         {/* Botão Resolver/Desmarcar */}
-        <Pressable onPress={onToggleComplete} style={[styles.button, styles.resolveButton]}>
-          <Text style={styles.resolveText}>
-            {task.isCompleted ? 'MARCAR COMO NÃO CONCLUÍDA' : 'RESOLVER TAREFA'}
+        <Pressable
+          onPress={onToggleComplete}
+          style={[styles.button, styles.resolveButton, reopenButtonStyle]}>
+          <Text style={[styles.resolveText, reopenTextStyle]}>
+            {task.isCompleted ? 'REABRIR TAREFA' : 'RESOLVER TAREFA'}
           </Text>
         </Pressable>
       </View>
