@@ -1,86 +1,140 @@
-# Guia de Commits com Git
+# Taskly - Gerenciador de Tarefas Mobile
 
-## Importância do Uso Apropriado de Commits
+Taskly é um aplicativo mobile completo desenvolvido em React Native para ajudar você a organizar suas tarefas, definir prazos, prioridades e personalizar seu perfil. O app foi criado como parte de um desafio técnico, com foco em usabilidade, validação e funcionalidades robustas.
 
-O uso correto do `git commit` é essencial para o desenvolvimento de software, seja em projetos pessoais, de código aberto ou empresariais. Manter uma linguagem coerente e padronizada nas mensagens de commit ajuda todos os envolvidos no projeto a entenderem as mudanças e os contextos afetados.
+[🔗 Clique aqui para acessar o layout no Figma](#) <!-- Substitua pelo link real do Figma -->
 
-## Problemas com Commits Mal Comentados
+---
 
-Mensagens de commit pouco informativas podem dificultar o entendimento da natureza e do contexto das mudanças. A longo prazo, isso prejudica a manutenibilidade do software.
+## 📚 Sobre o Projeto
 
-## Benefícios dos Commits Documentados
+O objetivo do Taskly é proporcionar uma experiência eficiente e intuitiva para o gerenciamento do dia a dia, permitindo que o usuário crie, edite, conclua e organize tarefas e subtarefas, além de personalizar seu perfil e preferências.
 
-Commits bem documentados mostram quem alterou o que, quando, em qual contexto e qual tipo de alteração foi feita. Isso facilita o entendimento e a colaboração no projeto.
+---
 
-## Conventional Commits
+## 🎯 Objetivo Geral
 
-O Conventional Commits é uma convenção para mensagens de commit que segue um conjunto de regras, ajudando a manter um histórico explícito e estruturado.
+Construir um aplicativo de tarefas que permita:
 
-### Vantagens
+- Login e cadastro de usuários
+- Seleção de avatar
+- Criação, edição e exclusão de tarefas
+- Criação, edição e exclusão de subtarefas (checklist)
+- Recebimento de notificações sobre eventos importantes
+- Filtros de tarefas por prioridade
+- Organização de tarefas por data de vencimento, tags e prioridade
 
-*   Automatização da criação de CHANGELOGs
-*   Facilitação da entrada de novos desenvolvedores
-*   Geração de relatórios
-*   Melhor compreensão do foco do projeto (refatoração, novas features, etc.)
+---
 
-### Estrutura
+## 🧩 Funcionalidades Obrigatórias
 
-```
-<type>(<scope>): <subject>
-```
+### 🔐 Autenticação
 
-*   **type**: Tipo de commit (obrigatório)
-*   **scope**: Contexto do commit (opcional)
-*   **subject**: Mensagem do commit (obrigatório)
+- Login
+  - Opção "Lembrar de mim"
+  - Validação de e-mail e senha
+- Cadastro
+  - Nome e sobrenome (nome composto obrigatório)
+  - E-mail
+  - Número de telefone
+  - Senha e confirmação de senha
+  - Seleção de avatar no primeiro acesso
 
-### Tipos de Commit
+### 📋 Tarefas
 
-*   `test`: Criação ou alteração de códigos de teste
-*   `feat`: Desenvolvimento de uma nova feature
-*   `refactor`: Refatoração de código sem alterar a lógica de negócio
-*   `style`: Mudanças de formatação e estilo do código
-*   `fix`: Correção de erros que geram bugs
-*   `chore`: Mudanças no projeto que não afetam o sistema ou arquivos de testes
-*   `docs`: Mudanças na documentação do projeto
-*   `build`: Mudanças que afetam o processo de build ou dependências externas
-*   `perf`: Alteração que melhora a performance do sistema
-*   `ci`: Mudanças nos arquivos de configuração de CI
-*   `revert`: Reversão de um commit anterior
+- Listagem de tarefas
+- Criação de tarefas:
+  - Título
+  - Descrição
+  - Prazo para conclusão (data)
+- Edição de tarefas:
+  - Título
+  - Descrição
+  - Tags (máximo 5, sem compostas)
+  - Prioridade (alta, média ou baixa)
+  - Prazo para conclusão
+  - Subtarefas (adicionar/editar/deletar checklist)
+- Concluir tarefa
+- Filtro de tarefas por prioridade
 
-### Exemplos de Commits
+### 👤 Perfil
 
-*   `feat`: Adição de uma nova funcionalidade
-*   `fix`: Correção de um bug
-*   `docs`: Atualização da documentação
-*   `style`: Formatação de código
-*   `refactor`: Refatoração de código
-*   `test`: Adição de testes
-*   `chore`: Atualização de ferramentas de build
+- Visualizar informações do perfil
+- Editar perfil:
+  - Nome e sobrenome
+  - Número de telefone
+  - Avatar
+- Menu:
+  - Editar perfil
+  - Preferências (tema claro/escuro)
+  - Permissões (notificações, biometria)
+  - Termos e regulamentos (webview)
+  - Políticas de uso e privacidade (webview)
+  - Sair da conta
+  - Excluir conta
 
-### Observações
+---
 
-*   Apenas um tipo por commit
-*   O tipo é obrigatório
-*   Em caso de dúvida, separe em múltiplos commits
+## ✍️ Validações Obrigatórias
 
-## Uso do Scope
+### Login
 
-O `scope` é utilizado para contextualizar o commit, especialmente útil em projetos grandes.
+- **E-mail:** Formato válido (regex)
+- **Senha:** Mínimo 8 caracteres
+- **Mensagens de erro:** "E-mail e/ou senha incorretos"
 
-**Exemplo:**
+### Cadastro
 
-```
-feat(auth): adicionar autenticação por token
-```
+- **Nome e Sobrenome:** Nome composto obrigatório (mínimo dois nomes), máximo de 120 caracteres
+- **E-mail:** Formato válido
+- **Número:** Formato (DDD) 9 dddd-dddd
+- **Senha:** Mínimo 8 caracteres, máximo 20 caracteres, deve conter:
+  - Um caractere especial
+  - Uma letra minúscula
+  - Uma letra maiúscula
+- **Confirmação de senha:** As senhas devem ser iguais
 
-## Como Utilizamos na LinkApi
+### Criação/Edição de Tarefa
 
-Na LinkApi, adaptamos o Conventional Commits para nossas necessidades. Por exemplo, usamos o tipo `business` para mudanças de regras de negócio e definimos o escopo do commit de acordo com a sprint.
+- **Título:** Apenas string, sem suporte para emojis, máximo de 100 caracteres
+- **Descrição:** Sem suporte para emojis, máximo de 500 caracteres
+- **Prazo:** Validação de data válida
+- **Tags:** Não permitir tags compostas (sem espaços)
+- **Subtarefas:** Descrição máxima de 200 caracteres
 
-## Ferramenta de Apoio: CommitLint
+### Edição de Perfil
 
-O CommitLint verifica se as mensagens de commit seguem o padrão e bloqueia commits que não seguem as convenções.
+- **Nome e Sobrenome:** Nome composto obrigatório
+- **Número:** Formato (DDD) 9 dddd-dddd
 
-## Conclusão
+---
 
-Adotar o Conventional Commits melhora a colaboração, o gerenciamento de projetos e a integração com repositórios da comunidade. É uma prática que, apesar de demandar tempo inicialmente, traz grandes benefícios a longo prazo.
+## 🛠️ Tecnologias Utilizadas
+
+- React Native
+- TypeScript
+- Context API
+- MMKV/AsyncStorage
+- React Navigation
+- FontAwesome Icons
+
+---
+
+## 🚀 Como Usar
+
+1. Faça login ou crie uma nova conta.
+2. Escolha seu avatar e personalize seu perfil.
+3. Crie tarefas, defina prazos, prioridades e adicione tags.
+4. Organize suas tarefas com filtros por prioridade, data e tags.
+5. Edite ou exclua tarefas e subtarefas conforme necessário.
+6. Acesse o menu para editar seu perfil, trocar o tema, visualizar políticas ou sair/excluir sua conta.
+
+---
+
+## 📄 Licença
+
+Este projeto é apenas para fins de estudo e demonstração.
+
+---
+
+Desenvolvido com 💙 para o desafio de app de tarefas.
