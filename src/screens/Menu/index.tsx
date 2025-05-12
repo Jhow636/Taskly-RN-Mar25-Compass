@@ -44,9 +44,7 @@ const Menu: React.FC = () => {
       id: '1',
       title: mensage.userEdit,
       icon: <Icon name="upload-cloud" size={25} color={theme.colors.mainText} />,
-      modalTextconten: 'Tem certeza que deseja editar as informações do perfil.',
-      acceptText: 'EDITAR',
-      modalTitle: 'Deseja editar o perfil',
+
       action: () => navigation.navigate('UserEdit'),
     },
     {
