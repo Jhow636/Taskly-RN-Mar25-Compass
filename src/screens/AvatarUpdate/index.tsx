@@ -1,5 +1,5 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, Alert, Animated} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import Button from '../../components/Button';
@@ -8,6 +8,8 @@ import {CustomApiError, updateFullProfile} from '../../services/api';
 import {UserEditStackParamList} from '../UserEdit';
 import {useTheme} from '../../theme/ThemeContext';
 import {Theme} from '../../theme/Theme';
+import BackMenu from '../../components/BackButtom';
+import { calculateProgressBarWidth } from '../../utils/AnimationUtils';
 
 const avatars = [
   {id: 1, source: require('../../assets/avatarr1.jpg')},
@@ -18,6 +20,16 @@ const avatars = [
 ];
 
 const AvatarUpdate: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [progressoAtual, setProgressoAtual] = useState(0);
+  const progressoTotal = 100;
+  const [carregando, setCarregando] = useState(true);
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+  const { widthInterpolation, progressPercentage } = calculateProgressBarWidth(
+      animatedProgress,
+      progressoAtual,
+      progressoTotal,
+    );
   const navigation = useNavigation();
   const route = useRoute<RouteProp<UserEditStackParamList, 'AvatarUpdate'>>();
   const {newName, newPhone, currentPicture} = route.params;
@@ -27,7 +39,27 @@ const AvatarUpdate: React.FC = () => {
 
   const auth = useAuth();
   const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+
+
+useEffect(() => {
+    let contador = 50;
+      setProgressoAtual(contador);
+
+      if (contador >= progressoTotal) {
+        setCarregando(false);
+      }
+
+
+  }, []);
+
+  const incrementProgress = () => {
+    setProgressoAtual((prev) => Math.min(prev + 50, progressoTotal));
+  };
+
+
+
+
+
 
   useEffect(() => {
     if (currentPicture) {
@@ -39,6 +71,7 @@ const AvatarUpdate: React.FC = () => {
   }, [currentPicture]);
 
   const handleSelectAvatar = (id: number) => {
+    incrementProgress();
     setSelectedAvatarId(id);
   };
 
@@ -86,6 +119,21 @@ const AvatarUpdate: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
+
+      <View>
+          <BackMenu text="EDIÇÂO DE PERFIL" />
+      </View>
+      <View style={styles.progressBarContainer}>
+          <View style={styles.progressBarBackground}>
+            <Animated.View
+              style={[
+                styles.progressBarFill,
+                { width: widthInterpolation },
+              ]}
+                        />
+          </View>
+        </View>
+        
       <View style={styles.container}>
         <Text style={styles.title}>ATUALIZE SEU AVATAR</Text>
         <Text style={styles.subtitle}>(Escolha somente um)</Text>
@@ -146,6 +194,26 @@ const getStyles = (theme: Theme) =>
       color: theme.colors.secondaryText,
       marginBottom: 32,
       textAlign: 'center',
+    },
+    progressBarContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      paddingLeft: 40,
+      paddingRight: 40,
+      paddingTop:40,
+    },
+    progressBarBackground: {
+      backgroundColor: theme.colors.primaryLight,
+      height: 8,
+      flex: 1,
+      marginRight: 10,
+      overflow: 'hidden',
+    },
+    progressBarFill: {
+      backgroundColor: theme.colors.primary,
+      height: '100%',
+      paddingTop:40,
     },
     avatarContainer: {
       flexDirection: 'row',
