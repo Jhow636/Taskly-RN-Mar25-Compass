@@ -27,7 +27,13 @@ const CarouselItem = ({
   const [modal, setModal] = useState(false);
 
   return (
-    <TouchableOpacity style={styles.container} onPress={() => setModal(!modal)}>
+    <TouchableOpacity style={styles.container} onPress={() => {
+      if (modalTextconten && acceptText && modalTitle) {
+        setModal(true); 
+      } else {
+        action();
+      }
+    }}>
       <ConfirmMenuModal
         isVisible={modal}
         onClose={() => setModal(false)}
