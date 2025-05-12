@@ -148,7 +148,7 @@ const UserEdit: React.FC = () => {
               <View style={styles.progressBarBackground}>
                 <Animated.View style={[styles.progressBarFill, {width: widthInterpolation}]} />
               </View>
-              <Text>{`${Math.round(progressPercentage * 100)}%`}</Text>
+             
             </View>
           )}
         </View>
