@@ -1,14 +1,15 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, FlatList, SafeAreaView, Alert} from 'react-native';
 import {UserInfoCard} from '../../components/userInfo';
 import MenuOption from '../../components/menuOption';
 import CarouselItem, {CarouselItemProps} from '../../components/carouselItem';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme} from '../../theme/ThemeContext';
 import {Theme} from '../../theme/Theme';
 import {useAuth} from '../../context/AuthContext';
 import Icon from '@react-native-vector-icons/feather';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import UpdateModal from '../../components/UpdateModal';
 
 const mensage = {
   userEdit: 'Editar Informações Pessoais',
@@ -22,6 +23,20 @@ const Menu: React.FC = () => {
   const styles = getStyles(theme);
   const {logout, deleteUserAccount} = useAuth();
   const [isbiomtric, setbiometric] = useState(false);
+//Modal user edit finish
+  const [modalVisible, setModalVisible] = useState(false);
+  const [avatarUpdated, setAvatarUpdated] = useState(false); // Inicializa como `false`
+
+      const route = useRoute();
+      const params = route.params as { avatarUpdated: boolean };
+      console.log("teste route "+avatarUpdated);
+
+      useEffect(() => {
+        if (params?.avatarUpdated) {
+          setAvatarUpdated(true); // Atualiza o estado local para `true`
+          setModalVisible(true); // Exibe o modal
+        }
+      }, [params?.avatarUpdated]); // Executa apenas quando avatarUpdated mudar
 
   const handleDeleteAccount = async () => {
     console.log('Tentando excluir a conta...');
@@ -108,6 +123,14 @@ const Menu: React.FC = () => {
           action={() => {
             navigation.navigate('Terms' as never);
           }}
+        />
+
+        <UpdateModal 
+           title='Perfil atualizado' 
+           confirmButtonText='FECHAR' 
+           isVisible={modalVisible}  
+           action={()=>setModalVisible(false)}
+          content='Suas informações foram salvas com sucesso.'
         />
       </View>
     </SafeAreaView>

@@ -25,7 +25,7 @@ const AvatarUpdate: React.FC = () => {
   const progressoTotal = 100;
   const [carregando, setCarregando] = useState(true);
   const animatedProgress = useRef(new Animated.Value(0)).current;
-  const { widthInterpolation, progressPercentage } = calculateProgressBarWidth(
+  const { widthInterpolation } = calculateProgressBarWidth(
       animatedProgress,
       progressoAtual,
       progressoTotal,
@@ -96,14 +96,8 @@ useEffect(() => {
         picture: pictureToUpdate,
       });
 
-      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+      navigation.navigate('Home', { avatarUpdated: true });
       await auth.refreshUserProfile();
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      }
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      }
     } catch (error: any) {
       console.error('Erro ao atualizar perfil completo:', error);
       const errorMessage =
@@ -120,7 +114,7 @@ useEffect(() => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
 
-      <View>
+      <View style={styles.top}>
           <BackMenu text="EDIÇÂO DE PERFIL" />
       </View>
       <View style={styles.progressBarContainer}>
@@ -178,10 +172,9 @@ const getStyles = (theme: Theme) =>
       backgroundColor: theme.colors.background,
     },
     container: {
+      padding:40,
       flex: 1,
-      padding: 20,
       alignItems: 'center',
-      justifyContent: 'center',
     },
     title: {
       ...theme.typography.bigTitle,
@@ -222,9 +215,9 @@ const getStyles = (theme: Theme) =>
       marginBottom: 40,
     },
     avatarButton: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
+      width: 95,
+      height: 95,
+      borderRadius: 47.5,
       margin: 10,
       overflow: 'hidden',
       borderWidth: 2,
@@ -240,6 +233,9 @@ const getStyles = (theme: Theme) =>
     },
     opaqueAvatar: {
       opacity: 0.4,
+    },
+    top:{
+     paddingTop:20,
     },
   });
 
