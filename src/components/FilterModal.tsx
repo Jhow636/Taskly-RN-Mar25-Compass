@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   StyleSheet,
+  TextInput,
 } from 'react-native';
 
 interface FilterModalProps {
@@ -32,6 +33,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const [isOrderByOpen, setIsOrderByOpen] = useState<boolean>(false); // Fechado por padrão
   const [isTagsOpen, setIsTagsOpen] = useState<boolean>(false); // Fechado por padrão
   const [isDateOpen, setIsDateOpen] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // Estados para os filtros selecionados
   const [selectedPriority, setSelectedPriority] = useState<'high-to-low' | 'low-to-high'>(
@@ -69,7 +71,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     onApplyFilters({
       orderBy: selectedPriority,
       tags: selectedTagsList,
-      date: null, // Implementação futura
+      date: selectedDate,
     });
     onClose();
   };
@@ -81,6 +83,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
       clearedTags[tag] = false;
     });
     setSelectedTags(clearedTags);
+    setSelectedDate(null);
   };
 
   // Impedir que toques na área ao redor do modal fechem o modal
@@ -161,6 +164,25 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     </View>
                   )}
                 </View>
+                {isDateOpen && (
+                  <View style={styles.sectionContent}>
+                    <Text style={styles.placeholderText}>Selecione uma data (dd/mm/yyyy):</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderColor: '#ccc',
+                        borderRadius: 4,
+                        padding: 8,
+                        marginTop: 8,
+                        width: 150,
+                      }}
+                      placeholder="dd/mm/yyyy"
+                      value={selectedDate || ''}
+                      onChangeText={setSelectedDate}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                )}
 
                 {/* Seção de Tags */}
                 <View style={styles.section}>

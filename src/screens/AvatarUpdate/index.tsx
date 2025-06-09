@@ -22,11 +22,11 @@ import BackMenu from '../../components/BackButtom';
 import {calculateProgressBarWidth} from '../../utils/AnimationUtils';
 
 const avatars = [
-  {id: 1, source: require('../../assets/avatarr1.jpg')},
-  {id: 2, source: require('../../assets/avatarr2.jpg')},
-  {id: 3, source: require('../../assets/avatarr3.jpg')},
-  {id: 4, source: require('../../assets/avatarr4.jpg')},
-  {id: 5, source: require('../../assets/avatarr5.jpg')},
+  {id: 1, source: {uri: 'https://avatarescompass.s3.eu-north-1.amazonaws.com/avatarr1.jpg'}},
+  {id: 2, source: {uri: 'https://avatarescompass.s3.eu-north-1.amazonaws.com/avatarr2.jpg'}},
+  {id: 3, source: {uri: 'https://avatarescompass.s3.eu-north-1.amazonaws.com/avatarr3.jpg'}},
+  {id: 4, source: {uri: 'https://avatarescompass.s3.eu-north-1.amazonaws.com/avatarr4.jpg'}},
+  {id: 5, source: {uri: 'https://avatarescompass.s3.eu-north-1.amazonaws.com/avatarr5.jpg'}},
 ];
 
 const AvatarUpdate: React.FC = () => {

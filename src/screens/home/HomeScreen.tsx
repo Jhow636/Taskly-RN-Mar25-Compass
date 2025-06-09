@@ -186,18 +186,35 @@ const HomeScreen: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
+  useEffect(() => {
+    // Extrai todas as tags únicas das tarefas atuais
+    const tagsSet = new Set<string>();
+    tasks.forEach(task => {
+      (task.tags || []).forEach(tag => tagsSet.add(tag));
+    });
+    setAvailableTags(Array.from(tagsSet));
+  }, [tasks]);
+
   const applyFilters = useCallback(
     (filters: FilterOptions, taskList = tasks): void => {
       let filteredTasks = [...taskList];
 
-      // Apply tag filters
+      // Filtro por tags
       if (filters.tags && filters.tags.length > 0) {
         filteredTasks = filteredTasks.filter(task =>
           task.tags.some(tag => filters.tags.includes(tag)),
         );
       }
 
-      // Apply priority sorting
+      // Filtro por data
+      if (filters.date) {
+        filteredTasks = filteredTasks.filter(task => {
+          const taskDate = formatDateToDdMmYyyy(task.dueDate);
+          return taskDate === filters.date;
+        });
+      }
+
+      // Ordenação por prioridade
       filteredTasks.sort((a, b) => {
         const priorityValues: {[key: string]: number} = {ALTA: 3, MÉDIA: 2, BAIXA: 1};
         const priorityA = priorityValues[a.priority] || 2;
@@ -567,7 +584,7 @@ const HomeScreen: React.FC = () => {
           )
         ) : hasTasks && userId ? (
           <FlatList
-            data={activeTasks}
+            data={displayedTasks}
             renderItem={({item}) => (
               <TaskItem
                 task={item}
