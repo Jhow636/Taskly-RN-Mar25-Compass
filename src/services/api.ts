@@ -1,7 +1,7 @@
 import axios, {AxiosError, InternalAxiosRequestConfig} from 'axios';
 import {UserProfile} from '../context/AuthContext';
 
-const API_BASE_URL = 'http://15.229.11.44:3000';
+const API_BASE_URL = 'http://13.60.33.195:3000';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
